@@ -1,0 +1,38 @@
+import { VerticalBox } from "std-widgets.slint";
+
+export component LoginView inherits Rectangle {
+
+    background: @linear-gradient(
+        145deg,
+        #0a0a0f 0%,
+        #12121a 100%
+    );
+
+    callback loginSuccessful();
+
+    VerticalBox {
+        padding: 40px;
+        spacing: 25px;
+        
+        Rectangle {
+            height: 50px;
+            background: transparent;
+
+            Rectangle {
+                x: -10px;
+                y: -5px;
+           }
+        // titulo con efecto neon
+            Text {
+              text: "Iniciar Sesión";
+              font-size: 32px;
+              font-weight: 900;
+              horizontal-alignment: center;
+              color: #00ffff;
+              font-family: "Orbitron";
+           }
+
+     }
+    }            
+}
+

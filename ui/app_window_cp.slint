@@ -1,0 +1,816 @@
+import { Button, VerticalBox, HorizontalBox, StandardTableView, LineEdit, CheckBox, Switch } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    title: "BODEX - Sistema de Gestión";
+    preferred-width: 1000px;
+    preferred-height: 800px;
+    min-width: 800px;
+    min-height: 600px;
+
+    // Estado de la navegación
+    // 0 = Inicio, 1 = Inventario, 2 = Ventas, 3 = Agregar Producto, 4 = Editar Producto, 5 = Marcas
+    in-out property <int> active_tab: 0; 
+    in-out property <[[StandardListViewItem]]> inventory_rows;
+    in-out property <int> selected_row: -1;
+    
+    // Propiedades para el formulario de nuevo producto
+    in-out property <string> new_product_name: "";
+    in-out property <string> new_product_precio_neto: "";
+    in-out property <string> new_product_precio_venta: "";
+    in-out property <string> new_product_stock: "";
+    in-out property <string> new_product_descripcion: "";
+    in-out property <string> new_product_peso: "";
+    in-out property <string> new_product_tamano: "";
+    in-out property <string> new_product_unidad_medida: "";
+    in-out property <string> new_product_presentacion: "";
+    in-out property <string> new_product_codigo: "";
+    in-out property <bool> new_product_activo: true;
+    in-out property <string> new_product_fecha_vencimiento: "";
+    in-out property <string> new_product_marca_id: "";
+    
+    // Propiedades para el formulario de editar producto
+    in-out property <int> edit_product_id: 0;
+    in-out property <string> edit_product_name: "";
+    in-out property <string> edit_product_precio_neto: "";
+    in-out property <string> edit_product_precio_venta: "";
+    in-out property <string> edit_product_stock: "";
+    in-out property <string> edit_product_descripcion: "";
+    in-out property <string> edit_product_peso: "";
+    in-out property <string> edit_product_tamano: "";
+    in-out property <string> edit_product_unidad_medida: "";
+    in-out property <string> edit_product_presentacion: "";
+    in-out property <string> edit_product_codigo: "";
+    in-out property <bool> edit_product_activo: true;
+    in-out property <string> edit_product_fecha_vencimiento: "";
+    in-out property <string> edit_product_marca_id: "";
+    
+    // Callbacks con las nuevas firmas
+    callback add_product(string, string, string, string, string, string, string, string, string, string, bool, string, string);
+    callback delete_product(int);
+    callback get_product_for_edit(int);
+    callback update_product(int, string, string, string, string, string, string, string, string, string, string, bool, string, string);
+    callback refresh_inventory();
+    callback close_app();
+
+    HorizontalBox {
+        padding: 0; spacing: 0;
+
+        // --- Sidebar ---
+        Rectangle {
+            width: 200px;
+            background: #1a2a3a;
+            VerticalBox {
+                padding: 20px;
+                alignment: start;
+                spacing: 15px;
+                
+                // Botones de navegación
+                Button { 
+                    text: "📊 Inicio"; 
+                    clicked => { root.active_tab = 0; }
+                    enabled: root.active_tab != 0;
+                }
+                Button { 
+                    text: "📦 Inventario"; 
+                    clicked => { root.active_tab = 1; }
+                    enabled: root.active_tab != 1;
+                }
+                Button { 
+                    text: "🏷️ Ventas"; 
+                    clicked => { root.active_tab = 2; }
+                    enabled: root.active_tab != 2;
+                }
+                Button { 
+                    text: "🏭 Marcas"; 
+                    clicked => { root.active_tab = 5; }
+                    enabled: root.active_tab != 5;
+                }
+                
+                Rectangle { vertical-stretch: 1.0; }
+                
+                // Botón de cerrar aplicación
+                Button {
+                    text: "❌ Cerrar";
+                    clicked => { root.close_app(); }
+                }
+                
+                Text { text: "v1.0.0"; color: gray; horizontal-alignment: center; }
+            }
+        }
+
+        // --- Contenido Dinámico ---
+        Rectangle {
+            background: #f5f5f5;
+            
+            // ==================== PANTALLA DE INICIO ====================
+            if root.active_tab == 0 : VerticalBox {
+                alignment: center;
+                spacing: 20px;
+                
+                Text { text: "📦"; font-size: 80px; horizontal-alignment: center; } 
+                
+                Text {
+                    text: "BODEX";
+                    font-size: 40px;
+                    font-weight: 800;
+                    horizontal-alignment: center;
+                    color: #2c3e50;
+                }
+                Text {
+                    text: "Gestión Inteligente para Microempresas";
+                    font-size: 16px;
+                    horizontal-alignment: center;
+                    color: #7f8c8d;
+                }
+                
+                HorizontalBox {
+                    alignment: center;
+                    spacing: 20px;
+                    Button { text: "Nueva Venta"; width: 150px; }
+                    Button { text: "Ver Stock"; width: 150px; clicked => { root.active_tab = 1; } }
+                }
+            }
+
+            // ==================== PANTALLA DE INVENTARIO ====================
+            if root.active_tab == 1 : VerticalBox {
+                padding: 30px;
+                spacing: 20px;
+                
+                // Header del panel
+                HorizontalBox {
+                    spacing: 10px;
+                    alignment: space-between;
+                    
+                    Text { 
+                        text: "Panel de Inventario"; 
+                        font-size: 28px; 
+                        font-weight: 600;
+                        color: #2c3e50;
+                    }
+                    
+                    Button {
+                        text: "+ Agregar Producto";
+                        height: 40px;
+                        primary: true;
+                        clicked => { root.active_tab = 3; }
+                    }
+                }
+                
+                // Botones de acción
+                HorizontalBox {
+                    spacing: 10px;
+                    alignment: start;
+                    
+                    Button {
+                        text: "✏️ Editar";
+                        enabled: root.selected_row >= 0;
+                        clicked => { 
+                            root.get_product_for_edit(root.selected_row);
+                            root.active_tab = 4;
+                        }
+                    }
+                    
+                    Button {
+                        text: "🗑️ Eliminar";
+                        enabled: root.selected_row >= 0;
+                        clicked => { 
+                            root.delete_product(root.selected_row);
+                            root.selected_row = -1;
+                        }
+                    }
+                    
+                    Text {
+                        text: root.selected_row >= 0 ? "Fila seleccionada: " + (root.selected_row + 1) : "Selecciona un producto";
+                        color: #7f8c8d;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Tabla de productos
+                Rectangle {
+                    background: white;
+                    border-radius: 8px;
+                    
+                    VerticalBox {
+                        padding: 15px;
+                        StandardTableView {
+                            columns: [
+                                {title: "Código"}, 
+                                {title: "Producto"}, 
+                                {title: "Precio Venta"}, 
+                                {title: "Stock"},
+                                {title: "Marca"},
+                                {title: "Estado"}
+                            ];
+                            rows: root.inventory_rows;
+                            current-row <=> root.selected_row;
+                        }
+                    }
+                }
+            }
+
+            // ==================== PANTALLA DE VENTAS ====================
+            if root.active_tab == 2 : VerticalBox {
+                padding: 30px;
+                spacing: 20px;
+                
+                Text { 
+                    text: "Panel de Ventas"; 
+                    font-size: 28px; 
+                    font-weight: 600;
+                    color: #2c3e50;
+                }
+                
+                Text { 
+                    text: "Funcionalidad de ventas próximamente..."; 
+                    color: #7f8c8d;
+                }
+            }
+
+            // ==================== PANTALLA AGREGAR PRODUCTO ====================
+            if root.active_tab == 3 : VerticalBox {
+                padding: 30px;
+                spacing: 15px;
+                
+                // Header
+                HorizontalBox {
+                    spacing: 15px;
+                    alignment: start;
+                    height: 50px;
+                    
+                    Button {
+                        text: "← Volver";
+                        clicked => { root.active_tab = 1; }
+                    }
+                    
+                    Text { 
+                        text: "Agregar Nuevo Producto"; 
+                        font-size: 24px; 
+                        font-weight: 600;
+                        color: #2c3e50;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Contenido scrolleable + botones
+                Rectangle {
+                    background: white;
+                    border-radius: 12px;
+                    vertical-stretch: 1;
+                    clip: true;
+                    
+                    VerticalBox {
+                        padding: 0;
+                        spacing: 0;
+                        height: 100%;
+                        
+                        // Área scrolleable
+                        Rectangle {
+                            vertical-stretch: 1;
+                            clip: true;
+                            
+                            Flickable {
+                                width: parent.width;
+                                height: parent.height;
+                                
+                                VerticalBox {
+                                    padding: 20px;
+                                    spacing: 15px;
+                                    width: parent.width - 40px;
+                                    height: self.preferred-height;
+                                    
+                                    // Fila 1: Código y Nombre
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 30%;
+                                            Text { text: "Código"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: PROD-001";
+                                                text <=> root.new_product_codigo;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 70%;
+                                            Text { text: "Nombre del Producto *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: Laptop Dell XPS 13";
+                                                text <=> root.new_product_name;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 2: Precios
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Precio Neto (Costo)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 800.00";
+                                                text <=> root.new_product_precio_neto;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Precio de Venta *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 999.99";
+                                                text <=> root.new_product_precio_venta;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 3: Stock y Marca
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Stock *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 10";
+                                                text <=> root.new_product_stock;
+                                                height: 32px;
+                                                input-type: number;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "ID Marca"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 1";
+                                                text <=> root.new_product_marca_id;
+                                                height: 32px;
+                                                input-type: number;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 4: Peso y Tamaño
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Peso (kg)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 1.5";
+                                                text <=> root.new_product_peso;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Tamaño/Dimensiones"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 30x20x2 cm";
+                                                text <=> root.new_product_tamano;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 5: Unidad de medida y Presentación
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Unidad de Medida"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: kg, litros, unidades";
+                                                text <=> root.new_product_unidad_medida;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Presentación"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: Unidad, Docena, Caja";
+                                                text <=> root.new_product_presentacion;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 6: Fecha de vencimiento y Estado
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Fecha Venc. (YYYY-MM-DD)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                placeholder-text: "Ej: 2025-12-31";
+                                                text <=> root.new_product_fecha_vencimiento;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            alignment: start;
+                                            Text { text: "Estado"; font-size: 13px; font-weight: 500; color: #555; }
+                                            Switch {
+                                                checked <=> root.new_product_activo;
+                                                text: root.new_product_activo ? "Activo" : "Inactivo";
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Descripción
+                                    VerticalBox {
+                                        spacing: 5px;
+                                        Text { text: "Descripción"; font-size: 13px; font-weight: 500; color: #555; }
+                                        LineEdit {
+                                            placeholder-text: "Descripción detallada del producto...";
+                                            text <=> root.new_product_descripcion;
+                                            height: 50px;
+                                        }
+                                    }
+                                    
+                                    // Espacio al final
+                                    Rectangle { height: 20px; }
+                                }
+                            }
+                        }
+                        
+                        // Botones fijos en la parte inferior
+                        Rectangle {
+                            height: 60px;
+                            background: white;
+                            
+                            HorizontalBox {
+                                spacing: 15px;
+                                alignment: end;
+                                padding: 10px;
+                                
+                                Button {
+                                    text: "Cancelar";
+                                    clicked => { root.active_tab = 1; }
+                                }
+                                
+                                Button {
+                                    text: "Guardar Producto";
+                                    primary: true;
+                                    height: 40px;
+                                    enabled: root.new_product_name != "" && root.new_product_precio_venta != "" && root.new_product_stock != "";
+                                    
+                                    clicked => { 
+                                        root.add_product(
+                                            root.new_product_name, 
+                                            root.new_product_precio_neto,
+                                            root.new_product_precio_venta, 
+                                            root.new_product_stock,
+                                            root.new_product_descripcion,
+                                            root.new_product_peso,
+                                            root.new_product_tamano,
+                                            root.new_product_unidad_medida,
+                                            root.new_product_presentacion,
+                                            root.new_product_codigo,
+                                            root.new_product_activo,
+                                            root.new_product_fecha_vencimiento,
+                                            root.new_product_marca_id
+                                        );
+                                        // Limpiar campos
+                                        root.new_product_name = "";
+                                        root.new_product_precio_neto = "";
+                                        root.new_product_precio_venta = "";
+                                        root.new_product_stock = "";
+                                        root.new_product_descripcion = "";
+                                        root.new_product_peso = "";
+                                        root.new_product_tamano = "";
+                                        root.new_product_unidad_medida = "";
+                                        root.new_product_presentacion = "";
+                                        root.new_product_codigo = "";
+                                        root.new_product_activo = true;
+                                        root.new_product_fecha_vencimiento = "";
+                                        root.new_product_marca_id = "";
+                                        root.active_tab = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ==================== PANTALLA EDITAR PRODUCTO ====================
+            if root.active_tab == 4 : VerticalBox {
+                padding: 30px;
+                spacing: 15px;
+                
+                // Header
+                HorizontalBox {
+                    spacing: 15px;
+                    alignment: start;
+                    height: 50px;
+                    
+                    Button {
+                        text: "← Volver";
+                        clicked => { root.active_tab = 1; }
+                    }
+                    
+                    Text { 
+                        text: "Editar Producto"; 
+                        font-size: 24px; 
+                        font-weight: 600;
+                        color: #2c3e50;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Contenido scrolleable + botones
+                Rectangle {
+                    background: white;
+                    border-radius: 12px;
+                    vertical-stretch: 1;
+                    clip: true;
+                    
+                    VerticalBox {
+                        padding: 0;
+                        spacing: 0;
+                        height: 100%;
+                        
+                        // Área scrolleable
+                        Rectangle {
+                            vertical-stretch: 1;
+                            clip: true;
+                            
+                            Flickable {
+                                width: parent.width;
+                                height: parent.height;
+                                
+                                VerticalBox {
+                                    padding: 20px;
+                                    spacing: 15px;
+                                    width: parent.width - 40px;
+                                    height: self.preferred-height;
+                                    
+                                    // Fila 1: Código y Nombre
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 30%;
+                                            Text { text: "Código"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_codigo;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 70%;
+                                            Text { text: "Nombre del Producto *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_name;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 2: Precios
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Precio Neto (Costo)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_precio_neto;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Precio de Venta *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_precio_venta;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 3: Stock y Marca
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Stock *"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_stock;
+                                                height: 32px;
+                                                input-type: number;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "ID Marca"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_marca_id;
+                                                height: 32px;
+                                                input-type: number;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 4: Peso y Tamaño
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Peso (kg)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_peso;
+                                                height: 32px;
+                                                input-type: decimal;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Tamaño/Dimensiones"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_tamano;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 5: Unidad de medida y Presentación
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Unidad de Medida"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_unidad_medida;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Presentación"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_presentacion;
+                                                height: 32px;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Fila 6: Fecha de vencimiento y Estado
+                                    HorizontalBox {
+                                        spacing: 15px;
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            Text { text: "Fecha Venc. (YYYY-MM-DD)"; font-size: 13px; font-weight: 500; color: #555; }
+                                            LineEdit {
+                                                text <=> root.edit_product_fecha_vencimiento;
+                                                height: 32px;
+                                            }
+                                        }
+                                        
+                                        VerticalBox {
+                                            spacing: 5px;
+                                            width: 50%;
+                                            alignment: start;
+                                            Text { text: "Estado"; font-size: 13px; font-weight: 500; color: #555; }
+                                            Switch {
+                                                checked <=> root.edit_product_activo;
+                                                text: root.edit_product_activo ? "Activo" : "Inactivo";
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Descripción
+                                    VerticalBox {
+                                        spacing: 5px;
+                                        Text { text: "Descripción"; font-size: 13px; font-weight: 500; color: #555; }
+                                        LineEdit {
+                                            text <=> root.edit_product_descripcion;
+                                            height: 50px;
+                                        }
+                                    }
+                                    
+                                    // Espacio al final
+                                    Rectangle { height: 20px; }
+                                }
+                            }
+                        }
+                        
+                        // Botones fijos en la parte inferior
+                        Rectangle {
+                            height: 60px;
+                            background: white;
+                            
+                            HorizontalBox {
+                                spacing: 15px;
+                                alignment: end;
+                                padding: 10px;
+                                
+                                Button {
+                                    text: "Cancelar";
+                                    clicked => { root.active_tab = 1; }
+                                }
+                                
+                                Button {
+                                    text: "Actualizar Producto";
+                                    primary: true;
+                                    height: 40px;
+                                    enabled: root.edit_product_name != "" && root.edit_product_precio_venta != "" && root.edit_product_stock != "";
+                                    
+                                    clicked => { 
+                                        root.update_product(
+                                            root.edit_product_id,
+                                            root.edit_product_name, 
+                                            root.edit_product_precio_neto,
+                                            root.edit_product_precio_venta, 
+                                            root.edit_product_stock,
+                                            root.edit_product_descripcion,
+                                            root.edit_product_peso,
+                                            root.edit_product_tamano,
+                                            root.edit_product_unidad_medida,
+                                            root.edit_product_presentacion,
+                                            root.edit_product_codigo,
+                                            root.edit_product_activo,
+                                            root.edit_product_fecha_vencimiento,
+                                            root.edit_product_marca_id
+                                        );
+                                        root.active_tab = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ==================== PANTALLA DE MARCAS ====================
+            if root.active_tab == 5 : VerticalBox {
+                padding: 30px;
+                spacing: 20px;
+                
+                Text { 
+                    text: "Gestión de Marcas"; 
+                    font-size: 28px; 
+                    font-weight: 600;
+                    color: #2c3e50;
+                }
+                
+                Text { 
+                    text: "Aquí podrás gestionar las marcas de los productos"; 
+                    color: #7f8c8d;
+                }
+            }
+        }
+    }
+}

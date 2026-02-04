@@ -1,5 +1,6 @@
 use crate::db;
-use slint::{ModelRc, StandardListViewItem, VecModel};
+use crate::slint_generatedAppWindow;
+use slint::{ModelRc, VecModel};
 use std::rc::Rc;
 
 /// Estructura para mantener el estado del inventario con IDs
@@ -13,14 +14,11 @@ pub struct ProductInfo {
     pub marca_nombre: Option<String>,
 }
 
-/// Producto representado como fila para la UI
-pub type InventoryRow = ModelRc<StandardListViewItem>;
-
 /// Almacena los productos cargados para poder acceder a ellos por índice
 static mut LOADED_PRODUCTS: Vec<ProductInfo> = Vec::new();
 
 /// Obtiene los productos de la base de datos y los convierte en filas para la tabla
-pub fn get_inventory_rows() -> Result<ModelRc<InventoryRow>, Box<dyn std::error::Error>> {
+pub fn get_inventory_rows() -> Result<ModelRc<slint_generatedAppWindow::Producto>, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
     let productos = db::obtener_productos_con_marca(&conn)?;
 
@@ -41,24 +39,15 @@ pub fn get_inventory_rows() -> Result<ModelRc<InventoryRow>, Box<dyn std::error:
         LOADED_PRODUCTS = product_infos;
     }
 
-    let rows: Vec<InventoryRow> = productos
+    let rows: Vec<slint_generatedAppWindow::Producto> = productos
         .into_iter()
         .map(|p| {
-            let codigo_str = p.codigo.unwrap_or_else(|| "-".to_string());
-            let marca_str = p.marca_nombre.unwrap_or_else(|| "-".to_string());
-            let estado_str = if p.activo { "Activo" } else { "Inactivo" };
-            
-            ModelRc::from(Rc::new(VecModel::from(vec![
-                StandardListViewItem::from(slint::SharedString::from(codigo_str)),
-                StandardListViewItem::from(slint::SharedString::from(p.nombre)),
-                StandardListViewItem::from(slint::SharedString::from(format!(
-                    "${:.2}",
-                    p.precio_venta
-                ))),
-                StandardListViewItem::from(slint::SharedString::from(p.stock.to_string())),
-                StandardListViewItem::from(slint::SharedString::from(marca_str)),
-                StandardListViewItem::from(slint::SharedString::from(estado_str)),
-            ])))
+            slint_generatedAppWindow::Producto {
+                id: p.id as i32,
+                nombre: p.nombre.into(),
+                stock: p.stock as i32,
+                precio: p.precio_venta as f32,
+            }
         })
         .collect();
 
@@ -226,20 +215,19 @@ pub fn get_product_details(id: i64) -> Result<Option<db::ProductoConMarca>, Box<
 
 /// Obtiene todas las marcas como filas para la UI
 #[allow(dead_code)]
-pub fn get_brand_rows() -> Result<ModelRc<InventoryRow>, Box<dyn std::error::Error>> {
+pub fn get_brand_rows() -> Result<ModelRc<slint_generatedAppWindow::Producto>, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
     let marcas = db::obtener_marcas(&conn)?;
 
-    let rows: Vec<InventoryRow> = marcas
+    let rows: Vec<slint_generatedAppWindow::Producto> = marcas
         .into_iter()
         .map(|m| {
-            let rif_str = m.rif.unwrap_or_else(|| "-".to_string());
-            
-            ModelRc::from(Rc::new(VecModel::from(vec![
-                StandardListViewItem::from(slint::SharedString::from(m.id.to_string())),
-                StandardListViewItem::from(slint::SharedString::from(m.nombre)),
-                StandardListViewItem::from(slint::SharedString::from(rif_str)),
-            ])))
+            slint_generatedAppWindow::Producto {
+                id: m.id as i32,
+                nombre: m.nombre.into(),
+                stock: 0, // Marcas don't have stock
+                precio: 0.0, // Marcas don't have precio
+            }
         })
         .collect();
 

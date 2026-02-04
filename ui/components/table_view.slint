@@ -1,0 +1,40 @@
+import { StandardTableView } from "std-widgets.slint";
+
+// Definimos qué datos tiene un producto
+export struct Producto {
+    id: int,
+    nombre: string,
+    stock: int,
+    precio: float,
+}
+
+export component DataView inherits Rectangle {
+    // Esta propiedad la llenaremos desde Rust
+    in property <[Producto]> datos;
+
+    VerticalLayout {
+        padding: 20px;
+        Text {
+            text: "Listado de Productos";
+            font-size: 18px;
+            color: gray;
+        }
+        
+        // Un borde separador
+        Rectangle {
+            height: 1px;
+            background: #333;
+        }
+        
+        // Un bucle para renderizar filas (o puedes usar StandardTableView)
+        for p in root.datos : Rectangle {
+            height: 40px;
+            
+            HorizontalLayout {
+                Text { text: "\{p.nombre}"; color: white; width: 50%; }
+                Text { text: "Stock: \{p.stock}"; color: #aaa; }
+                Text { text: "$\{p.precio}"; color: #4CAF50; horizontal-alignment: right; }
+            }
+        }
+    }
+}

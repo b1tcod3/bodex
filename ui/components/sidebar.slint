@@ -1,0 +1,47 @@
+import { VerticalBox, Button } from "std-widgets.slint";
+
+export component Sidebar inherits Rectangle {
+            width: 200px;
+            background: #1a2a3a;
+            in-out property <string> active_tab;
+            callback tab-selected(string);
+            callback close-app();
+
+            VerticalBox {
+                padding: 20px;
+                alignment: start;
+                spacing: 15px;
+                
+                // Botones de navegación
+                Button { 
+                    text: "📊 Inicio"; 
+                    clicked => { root.active_tab = "inicio"; }
+                    enabled: root.active_tab != "inicio";
+                }
+                Button { 
+                    text: "📦 Inventario"; 
+                    clicked => { root.active_tab = "inventario"; }
+                    enabled: root.active_tab != "inventario";
+                }
+                Button { 
+                    text: "🏷️ Ventas"; 
+                    clicked => { root.active_tab = "ventas"; }
+                    enabled: root.active_tab != "ventas";
+                }
+                Button { 
+                    text: "🏭 Marcas"; 
+                    clicked => { root.active_tab = "marcas"; }
+                    enabled: root.active_tab != "marcas";
+                }
+                
+                Rectangle { vertical-stretch: 1.0; }
+                
+                // Botón de cerrar aplicación
+                Button {
+                    text: "❌ Cerrar";
+                    clicked => { root.close-app(); }
+                }
+                
+                Text { text: "v1.0.0"; color: gray; horizontal-alignment: center; }
+            }
+}

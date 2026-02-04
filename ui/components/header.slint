@@ -1,0 +1,26 @@
+import { HorizontalBox } from "std-widgets.slint";
+
+export component Header inherits Rectangle {
+    in property <string> section-title: "Dashboard";
+    height: 60px;
+    background: #252526;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        width: parent.width;
+        background: #3e3e42;
+    }
+
+    HorizontalBox {
+        padding-left: 20px;
+        alignment: start;
+        Text {
+            text: root.section-title;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            vertical-alignment: center;
+        }
+    }
+}

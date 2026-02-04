@@ -1,0 +1,46 @@
+import { Sidebar } from "./components/sidebar.slint";
+import { Header } from "./components/header.slint";
+import { DataView, Producto } from "./components/table_view.slint";
+
+export component AppWindow inherits Window {
+    title: "Bodex v1.0";
+    width: 900px;
+    height: 600px;
+    
+    in property <[Producto]> inventory-rows: [];
+    in-out property <string> pestaña-actual: "inventario";
+    
+    // Properties for edit functionality
+    in-out property <int> edit_product_id;
+    in-out property <string> edit_product_name;
+    in-out property <string> edit_product_precio_venta;
+    in-out property <string> edit_product_stock;
+    
+    // Callbacks para la UI (without on_ prefix - Slint adds it automatically)
+    callback add_product(string, string, string, string, string, string, string, string, string, string, bool, string, string);
+    callback delete_product(int);
+    callback get_product_for_edit(int);
+    callback update_product(string, string, string, string, string, string, string, string, string, string, bool, string, string);
+    callback refresh_inventory();
+    callback close_app();
+
+    HorizontalLayout {
+        Sidebar {
+            active_tab: root.pestaña-actual;
+            tab-selected(nombre) => {
+                root.pestaña-actual = nombre;
+            }
+        }
+
+        VerticalLayout {
+            Header {
+                section-title: root.pestaña-actual;
+            }
+
+            // Cambiamos de vista según la pestaña
+            if (root.pestaña-actual == "inventario") : DataView {
+                datos: root.inventory-rows;
+            }
+        }
+    }
+}

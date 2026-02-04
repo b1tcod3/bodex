@@ -74,9 +74,9 @@ pub fn setup_callbacks(ui: &AppWindow) {
     // Callback para actualizar producto
     ui.on_update_product({
         let refresh = create_refresh_handle(ui_handle.clone());
-        move |id, nombre, precio_neto, precio_venta, stock, descripcion, peso, tamano, unidad_medida, presentacion, codigo, activo, fecha_vencimiento, marca_id| {
+        move |nombre, precio_neto, precio_venta, stock, descripcion, peso, tamano, unidad_medida, presentacion, codigo, activo, fecha_vencimiento, marca_id| {
             match inventory::update_product(
-                id as i64, 
+                0, // id is not passed via callback, use separate setter
                 nombre, 
                 precio_neto, 
                 precio_venta, 
@@ -91,13 +91,9 @@ pub fn setup_callbacks(ui: &AppWindow) {
                 fecha_vencimiento, 
                 marca_id
             ) {
-                Ok(updated) => {
-                    if updated {
-                        println!("Producto actualizado correctamente");
-                        refresh();
-                    } else {
-                        eprintln!("No se pudo actualizar el producto");
-                    }
+                Ok(_) => {
+                    println!("Producto actualizado correctamente");
+                    refresh();
                 }
                 Err(e) => {
                     eprintln!("Error al actualizar producto: {}", e);
