@@ -1,24 +1,24 @@
-import { Button, VerticalBox, HorizontalBox, LineEdit } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox } from "std-widgets.slint";
 
 export component NuevoProducto inherits Rectangle {
-    callback guardar_producto(string, string, string, string, string, string, string);
-    callback volver(); // Callback para regresar
+    callback guardar_producto(string, string, string, string, string, string, string, string, string, string, string, string, string);
+    callback volver();
 
     background: transparent;
 
     VerticalBox {
-        spacing: 20px;
-        
+        spacing: 15px;
+
         HorizontalBox {
             alignment: space-between;
             Text {
-                text: "⚡ REGISTRO TÉCNICO";
+                text: "REGISTRO DE PRODUCTOS";
                 font-size: 22px;
-                color: #ff00ff;
+                color: #00ffff;
                 font-weight: 800;
             }
             Button {
-                text: "⬅ Volver";
+                text: "Volver";
                 clicked => { root.volver(); }
             }
         }
@@ -28,40 +28,132 @@ export component NuevoProducto inherits Rectangle {
             border-radius: 10px;
             border-width: 1px;
             border-color: #00ffff;
-            padding: 25px;
 
             VerticalBox {
-                spacing: 15px;
-                // Formulario (Mismo que antes)
+                spacing: 12px;
+
+                Text {
+                    text: "DATOS BÁSICOS";
+                    font-size: 14px;
+                    color: #ff00ff;
+                    font-weight: 700;
+                }
+
                 HorizontalBox {
                     spacing: 15px;
                     VerticalBox {
-                        Text { text: "Nombre"; color: #00ffff; }
-                        name_in := LineEdit { }
+                        Text { text: "Nombre *"; color: #00ffff; font-size: 12px; }
+                        name_in := LineEdit { placeholder-text: "Nombre del producto"; }
                     }
                     VerticalBox {
-                        Text { text: "Código"; color: #00ffff; }
-                        sku_in := LineEdit { }
+                        Text { text: "Código / SKU"; color: #00ffff; font-size: 12px; }
+                        sku_in := LineEdit { placeholder-text: "Código de barras"; }
                     }
                 }
-                
+
+                VerticalBox {
+                    Text { text: "Descripción"; color: #00ffff; font-size: 12px; }
+                    desc_in := LineEdit { placeholder-text: "Descripción del producto"; }
+                }
+
+                Text {
+                    text: "PRECIOS";
+                    font-size: 14px;
+                    color: #ff00ff;
+                    font-weight: 700;
+                }
+
                 HorizontalBox {
                     spacing: 15px;
                     VerticalBox {
-                        Text { text: "Precio"; color: #00ffff; }
-                        price_in := LineEdit { }
+                        Text { text: "Precio Neto *"; color: #00ffff; font-size: 12px; }
+                        precio_neto_in := LineEdit { placeholder-text: "0.00"; }
                     }
                     VerticalBox {
-                        Text { text: "Stock"; color: #00ffff; }
-                        stock_in := LineEdit { }
+                        Text { text: "Precio Venta *"; color: #00ffff; font-size: 12px; }
+                        precio_venta_in := LineEdit { placeholder-text: "0.00"; }
+                    }
+                }
+
+                Text {
+                    text: "INVENTARIO";
+                    font-size: 14px;
+                    color: #ff00ff;
+                    font-weight: 700;
+                }
+
+                HorizontalBox {
+                    spacing: 15px;
+                    VerticalBox {
+                        Text { text: "Stock *"; color: #00ffff; font-size: 12px; }
+                        stock_in := LineEdit { placeholder-text: "0"; }
+                    }
+                    VerticalBox {
+                        Text { text: "Unidad Medida"; color: #00ffff; font-size: 12px; }
+                        unidad_medida_in := LineEdit { placeholder-text: "kg, lt, pza"; }
+                    }
+                }
+
+                Text {
+                    text: "MEDIDAS FÍSICAS";
+                    font-size: 14px;
+                    color: #ff00ff;
+                    font-weight: 700;
+                }
+
+                HorizontalBox {
+                    spacing: 15px;
+                    VerticalBox {
+                        Text { text: "Peso"; color: #00ffff; font-size: 12px; }
+                        peso_in := LineEdit { placeholder-text: "0.00"; }
+                    }
+                    VerticalBox {
+                        Text { text: "Tamaño"; color: #00ffff; font-size: 12px; }
+                        tamano_in := LineEdit { placeholder-text: "Pequeño, Mediano"; }
+                    }
+                }
+
+                VerticalBox {
+                    Text { text: "Presentación"; color: #00ffff; font-size: 12px; }
+                    presentacion_in := LineEdit { placeholder-text: "Frasco, Caja, Bolsa"; }
+                }
+
+                Text {
+                    text: "ADICIONALES";
+                    font-size: 14px;
+                    color: #ff00ff;
+                    font-weight: 700;
+                }
+
+                HorizontalBox {
+                    spacing: 15px;
+                    VerticalBox {
+                        Text { text: "Fecha Vencimiento"; color: #00ffff; font-size: 12px; }
+                        vencimiento_in := LineEdit { placeholder-text: "YYYY-MM-DD"; }
+                    }
+                    VerticalBox {
+                        Text { text: "Marca ID"; color: #00ffff; font-size: 12px; }
+                        marca_id_in := LineEdit { placeholder-text: "ID (opcional)"; }
+                    }
+                }
+
+                HorizontalBox {
+                    activo_in := CheckBox {
+                        text: "Producto activo";
+                        checked: true;
                     }
                 }
 
                 Button {
-                    text: "CONFIRMAR REGISTRO";
+                    text: "GUARDAR PRODUCTO";
                     height: 45px;
                     clicked => {
-                        root.guardar_producto(name_in.text, price_in.text, stock_in.text, sku_in.text, "", "", "1");
+                        root.guardar_producto(
+                            name_in.text, precio_neto_in.text, precio_venta_in.text, stock_in.text,
+                            desc_in.text, peso_in.text, tamano_in.text, unidad_medida_in.text,
+                            presentacion_in.text, sku_in.text, vencimiento_in.text,
+                            activo_in.checked ? "true" : "false", marca_id_in.text
+                        );
                     }
                 }
             }

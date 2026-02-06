@@ -41,11 +41,7 @@ export component AppWindow inherits Window {
     callback attempt-login(string, string);
     callback logout();
     
-    callback add-product(
-        string, string, string, string, string, 
-        string, string, string, string, string, 
-        bool, string, string
-    );
+    callback add-product(string, string, string, string, string, string, string, string, string, string, string, string, string);
     callback delete-product(int);
     callback get-product-for-edit(int);
     callback refresh-inventory();
@@ -95,7 +91,7 @@ export component AppWindow inherits Window {
                     spacing: 15px;
                     // Botón para volver al Dashboard desde cualquier sub-pantalla
                     if (product-screen != "inicio") : Button {
-                        text: "🏠 INICIO";
+                        text: "INICIO";
                         clicked => { root.product-screen = "inicio"; }
                     }
                     Button {
@@ -142,13 +138,12 @@ export component AppWindow inherits Window {
                     root.product-screen = "lista"; 
                 }
                 
-                guardar_producto(nombre, p_venta, stock, sku, peso, venc, m_id) => {
+                guardar_producto(nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id) => {
                     root.add-product(
-                        nombre, "0.0", p_venta, stock, "", 
-                        peso, "", "", "", sku, 
-                        true, venc, m_id
+                        nombre, p_neto, p_venta, stock, 
+                        desc, peso, tam, u_med, pres, cod, 
+                        venc, activo, m_id
                     );
-                    // Regresar a la lista tras guardar
                     root.product-screen = "lista";
                 }
             }

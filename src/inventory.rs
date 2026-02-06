@@ -1,6 +1,6 @@
 use crate::db;
 use crate::models::{self, Producto as DbProducto, ProductoNuevo};
-use slint::{ModelRc, VecModel, SharedString, StandardListViewItem};
+use slint::{ModelRc, SharedString, StandardListViewItem, VecModel};
 use std::rc::Rc;
 use std::sync::{Mutex, OnceLock};
 
@@ -23,12 +23,17 @@ fn get_cache() -> &'static Mutex<Vec<ProductInfo>> {
 
 /// Helper para parsear SharedString de Slint a tipos numéricos de Rust
 fn parse_num<T: std::str::FromStr>(val: &SharedString, default: T) -> T {
-    if val.is_empty() { default } else { val.parse().unwrap_or(default) }
+    if val.is_empty() {
+        default
+    } else {
+        val.parse().unwrap_or(default)
+    }
 }
 
 /// Obtiene los productos de la base de datos y los convierte en el formato
 /// [[StandardListViewItem]] que requiere el StandardTableView de tu .slint
-pub fn get_inventory_rows() -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
+pub fn get_inventory_rows(
+) -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
     // Usamos el submódulo productos para obtener los datos
     let productos = db::productos::obtener_productos_con_marca(&conn)?;
@@ -94,10 +99,11 @@ pub fn add_product(
     unidad_medida: SharedString,
     presentacion: SharedString,
     codigo: SharedString,
-    activo: bool,
     fecha_vencimiento: SharedString,
+    activo_str: SharedString,
     marca_id: SharedString,
 ) -> Result<i64, Box<dyn std::error::Error>> {
+    let activo = activo_str == "true";
     let conn = db::open_connection()?;
 
     let p_nuevo = ProductoNuevo {
@@ -113,7 +119,9 @@ pub fn add_product(
         codigo: (!codigo.is_empty()).then(|| codigo.into()),
         activo,
         fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
-        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
+        marca_id: (!marca_id.is_empty())
+            .then(|| marca_id.parse().ok())
+            .flatten(),
     };
 
     Ok(db::productos::crear_producto(&conn, &p_nuevo)?)
@@ -152,10 +160,12 @@ pub fn update_product(
         codigo: (!codigo.is_empty()).then(|| codigo.into()),
         activo,
         fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
-        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
+        marca_id: (!marca_id.is_empty())
+            .then(|| marca_id.parse().ok())
+            .flatten(),
     };
 
     // Suponiendo que tienes esta función en db/productos.rs
     // db::productos::actualizar_producto(&conn, &p_editado)
-    Ok(true) 
+    Ok(true)
 }

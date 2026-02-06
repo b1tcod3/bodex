@@ -1,7 +1,7 @@
-use crate::inventory;
 use crate::db;
-use slint::{ComponentHandle, Weak, SharedString, ModelRc, VecModel, StandardListViewItem};
+use crate::inventory;
 use crate::AppWindow;
+use slint::{ComponentHandle, ModelRc, SharedString, StandardListViewItem, VecModel, Weak};
 
 pub fn setup_callbacks(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
@@ -9,7 +9,8 @@ pub fn setup_callbacks(ui: &AppWindow) {
     // 1. LOGIN (Corregido con anotaciones de tipo)
     ui.on_attempt_login({
         let ui_handle = ui_handle.clone();
-        move |user: SharedString, pass: SharedString| { // <--- Tipos explícitos añadidos
+        move |user: SharedString, pass: SharedString| {
+            // <--- Tipos explícitos añadidos
             if let Some(ui) = ui_handle.upgrade() {
                 match db::open_connection() {
                     Ok(conn) => {
@@ -40,8 +41,23 @@ pub fn setup_callbacks(ui: &AppWindow) {
     // 2. GESTIÓN DE PRODUCTOS
     ui.on_add_product({
         let ui_handle = ui_handle.clone();
-        move |nombre, p_neto, p_venta, stock, desc, peso, tam, u_medida, pres, cod, act, f_venc, m_id| {
-            match inventory::add_product(nombre, p_neto, p_venta, stock, desc, peso, tam, u_medida, pres, cod, act, f_venc, m_id) {
+        move |nombre,
+              p_neto,
+              p_venta,
+              stock,
+              desc,
+              peso,
+              tam,
+              u_medida,
+              pres,
+              cod,
+              f_venc,
+              activo,
+              m_id| {
+            match inventory::add_product(
+                nombre, p_neto, p_venta, stock, desc, peso, tam, u_medida, pres, cod, f_venc,
+                activo, m_id,
+            ) {
                 Ok(_) => refresh_ui(ui_handle.clone()),
                 Err(e) => eprintln!("Error: {}", e),
             }
@@ -50,11 +66,9 @@ pub fn setup_callbacks(ui: &AppWindow) {
 
     ui.on_delete_product({
         let ui_handle = ui_handle.clone();
-        move |index| {
-            match inventory::delete_product_by_index(index) {
-                Ok(_) => refresh_ui(ui_handle.clone()),
-                Err(e) => eprintln!("Error: {}", e),
-            }
+        move |index| match inventory::delete_product_by_index(index) {
+            Ok(_) => refresh_ui(ui_handle.clone()),
+            Err(e) => eprintln!("Error: {}", e),
         }
     });
 
@@ -79,7 +93,11 @@ pub fn setup_callbacks(ui: &AppWindow) {
 
     ui.on_close_app({
         let ui_handle = ui_handle.clone();
-        move || { if let Some(ui) = ui_handle.upgrade() { let _ = ui.hide(); } }
+        move || {
+            if let Some(ui) = ui_handle.upgrade() {
+                let _ = ui.hide();
+            }
+        }
     });
 }
 
