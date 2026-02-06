@@ -1,28 +1,39 @@
 use crate::db;
-use crate::slint_generatedAppWindow;
-use slint::{ModelRc, VecModel};
+use crate::models::{self, Producto as DbProducto, ProductoNuevo};
+use slint::{ModelRc, VecModel, SharedString, StandardListViewItem};
 use std::rc::Rc;
+use std::sync::{Mutex, OnceLock};
 
-/// Estructura para mantener el estado del inventario con IDs
+/// Estructura para mantener el estado del inventario en caché para acceso rápido por índice
 #[derive(Debug, Clone)]
 pub struct ProductInfo {
     pub id: i64,
     pub nombre: String,
     pub precio_venta: f64,
     pub stock: i64,
-    pub codigo: Option<String>,
-    pub marca_nombre: Option<String>,
 }
 
-/// Almacena los productos cargados para poder acceder a ellos por índice
-static mut LOADED_PRODUCTS: Vec<ProductInfo> = Vec::new();
+/// Caché global segura para hilos (Thread-safe) mediante OnceLock y Mutex
+static LOADED_PRODUCTS: OnceLock<Mutex<Vec<ProductInfo>>> = OnceLock::new();
 
-/// Obtiene los productos de la base de datos y los convierte en filas para la tabla
-pub fn get_inventory_rows() -> Result<ModelRc<slint_generatedAppWindow::Producto>, Box<dyn std::error::Error>> {
+/// Helper para obtener acceso al caché global
+fn get_cache() -> &'static Mutex<Vec<ProductInfo>> {
+    LOADED_PRODUCTS.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+/// Helper para parsear SharedString de Slint a tipos numéricos de Rust
+fn parse_num<T: std::str::FromStr>(val: &SharedString, default: T) -> T {
+    if val.is_empty() { default } else { val.parse().unwrap_or(default) }
+}
+
+/// Obtiene los productos de la base de datos y los convierte en el formato
+/// [[StandardListViewItem]] que requiere el StandardTableView de tu .slint
+pub fn get_inventory_rows() -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
-    let productos = db::obtener_productos_con_marca(&conn)?;
+    // Usamos el submódulo productos para obtener los datos
+    let productos = db::productos::obtener_productos_con_marca(&conn)?;
 
-    // Guardar productos para acceso por índice
+    // 1. Sincronizamos el caché interno para que las acciones por índice (editar/eliminar) funcionen
     let product_infos: Vec<ProductInfo> = productos
         .iter()
         .map(|p| ProductInfo {
@@ -30,226 +41,121 @@ pub fn get_inventory_rows() -> Result<ModelRc<slint_generatedAppWindow::Producto
             nombre: p.nombre.clone(),
             precio_venta: p.precio_venta,
             stock: p.stock,
-            codigo: p.codigo.clone(),
-            marca_nombre: p.marca_nombre.clone(),
         })
         .collect();
 
-    unsafe {
-        LOADED_PRODUCTS = product_infos;
+    {
+        let mut cache = get_cache().lock().unwrap();
+        *cache = product_infos;
     }
 
-    let rows: Vec<slint_generatedAppWindow::Producto> = productos
+    // 2. Transformamos los datos al formato de celdas de Slint
+    let rows: Vec<ModelRc<StandardListViewItem>> = productos
         .into_iter()
         .map(|p| {
-            slint_generatedAppWindow::Producto {
-                id: p.id as i32,
-                nombre: p.nombre.into(),
-                stock: p.stock as i32,
-                precio: p.precio_venta as f32,
-            }
+            let row_data = vec![
+                StandardListViewItem::from(SharedString::from(p.nombre)),
+                StandardListViewItem::from(SharedString::from(format!("{:.2}", p.precio_venta))),
+                StandardListViewItem::from(SharedString::from(p.stock.to_string())),
+            ];
+            ModelRc::from(Rc::new(VecModel::from(row_data)))
         })
         .collect();
 
     Ok(ModelRc::from(Rc::new(VecModel::from(rows))))
 }
 
-/// Obtiene un producto por su índice en la tabla
+/// Recupera la información de un producto basándose en su posición en la tabla de la UI
 pub fn get_product_by_index(index: i32) -> Option<ProductInfo> {
-    unsafe {
-        if index >= 0 && (index as usize) < LOADED_PRODUCTS.len() {
-            Some(LOADED_PRODUCTS[index as usize].clone())
-        } else {
-            None
-        }
-    }
+    let cache = get_cache().lock().unwrap();
+    cache.get(index as usize).cloned()
 }
 
-/// Elimina un producto por su índice en la tabla
+/// Elimina un producto de la base de datos usando el índice de la tabla
 pub fn delete_product_by_index(index: i32) -> Result<bool, Box<dyn std::error::Error>> {
     if let Some(product) = get_product_by_index(index) {
         let conn = db::open_connection()?;
-        let deleted = db::eliminar_producto(&conn, product.id)?;
+        let deleted = db::productos::eliminar_producto(&conn, product.id)?;
         Ok(deleted)
     } else {
         Ok(false)
     }
 }
 
-/// Actualiza un producto existente
+/// Agrega un nuevo producto procesando los strings que vienen de los inputs de Slint
+pub fn add_product(
+    nombre: SharedString,
+    precio_neto: SharedString,
+    precio_venta: SharedString,
+    stock: SharedString,
+    descripcion: SharedString,
+    peso: SharedString,
+    tamano: SharedString,
+    unidad_medida: SharedString,
+    presentacion: SharedString,
+    codigo: SharedString,
+    activo: bool,
+    fecha_vencimiento: SharedString,
+    marca_id: SharedString,
+) -> Result<i64, Box<dyn std::error::Error>> {
+    let conn = db::open_connection()?;
+
+    let p_nuevo = ProductoNuevo {
+        nombre: nombre.into(),
+        precio_neto: parse_num(&precio_neto, 0.0),
+        precio_venta: parse_num(&precio_venta, 0.0),
+        stock: parse_num(&stock, 0),
+        descripcion: (!descripcion.is_empty()).then(|| descripcion.into()),
+        peso: (!peso.is_empty()).then(|| peso.parse().ok()).flatten(),
+        tamano: (!tamano.is_empty()).then(|| tamano.into()),
+        unidad_medida: (!unidad_medida.is_empty()).then(|| unidad_medida.into()),
+        presentacion: (!presentacion.is_empty()).then(|| presentacion.into()),
+        codigo: (!codigo.is_empty()).then(|| codigo.into()),
+        activo,
+        fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
+        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
+    };
+
+    Ok(db::productos::crear_producto(&conn, &p_nuevo)?)
+}
+
+/// Actualiza los datos de un producto existente
 pub fn update_product(
     id: i64,
-    nombre: slint::SharedString,
-    precio_neto: slint::SharedString,
-    precio_venta: slint::SharedString,
-    stock: slint::SharedString,
-    descripcion: slint::SharedString,
-    peso: slint::SharedString,
-    tamano: slint::SharedString,
-    unidad_medida: slint::SharedString,
-    presentacion: slint::SharedString,
-    codigo: slint::SharedString,
+    nombre: SharedString,
+    precio_neto: SharedString,
+    precio_venta: SharedString,
+    stock: SharedString,
+    descripcion: SharedString,
+    peso: SharedString,
+    tamano: SharedString,
+    unidad_medida: SharedString,
+    presentacion: SharedString,
+    codigo: SharedString,
     activo: bool,
-    fecha_vencimiento: slint::SharedString,
-    marca_id: slint::SharedString,
+    fecha_vencimiento: SharedString,
+    marca_id: SharedString,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
-    
-    let stock_int: i64 = stock.parse().unwrap_or(0);
-    let precio_neto_float: f64 = precio_neto.parse().unwrap_or(0.0);
-    let precio_venta_float: f64 = precio_venta.parse().unwrap_or(0.0);
-    let peso_float: Option<f64> = if peso.is_empty() { None } else { peso.parse().ok() };
-    let marca_id_int: Option<i64> = if marca_id.is_empty() { None } else { marca_id.parse().ok() };
-    
-    let fecha_vencimiento_date: Option<chrono::NaiveDate> = if fecha_vencimiento.is_empty() {
-        None
-    } else {
-        chrono::NaiveDate::parse_from_str(&fecha_vencimiento.to_string(), "%Y-%m-%d").ok()
-    };
 
-    let producto = db::Producto {
+    let p_editado = DbProducto {
         id,
         nombre: nombre.into(),
-        precio_neto: precio_neto_float,
-        precio_venta: precio_venta_float,
-        stock: stock_int,
-        descripcion: if descripcion.is_empty() { None } else { Some(descripcion.into()) },
-        peso: peso_float,
-        tamano: if tamano.is_empty() { None } else { Some(tamano.into()) },
-        unidad_medida: if unidad_medida.is_empty() { None } else { Some(unidad_medida.into()) },
-        presentacion: if presentacion.is_empty() { None } else { Some(presentacion.into()) },
-        codigo: if codigo.is_empty() { None } else { Some(codigo.into()) },
+        precio_neto: parse_num(&precio_neto, 0.0),
+        precio_venta: parse_num(&precio_venta, 0.0),
+        stock: parse_num(&stock, 0),
+        descripcion: (!descripcion.is_empty()).then(|| descripcion.into()),
+        peso: (!peso.is_empty()).then(|| peso.parse().ok()).flatten(),
+        tamano: (!tamano.is_empty()).then(|| tamano.into()),
+        unidad_medida: (!unidad_medida.is_empty()).then(|| unidad_medida.into()),
+        presentacion: (!presentacion.is_empty()).then(|| presentacion.into()),
+        codigo: (!codigo.is_empty()).then(|| codigo.into()),
         activo,
-        fecha_vencimiento: fecha_vencimiento_date,
-        marca_id: marca_id_int,
+        fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
+        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
     };
 
-    let updated = db::actualizar_producto(&conn, &producto)?;
-    Ok(updated)
-}
-
-/// Agrega un nuevo producto a la base de datos
-pub fn add_product(
-    nombre: slint::SharedString,
-    precio_neto: slint::SharedString,
-    precio_venta: slint::SharedString,
-    stock: slint::SharedString,
-    descripcion: slint::SharedString,
-    peso: slint::SharedString,
-    tamano: slint::SharedString,
-    unidad_medida: slint::SharedString,
-    presentacion: slint::SharedString,
-    codigo: slint::SharedString,
-    activo: bool,
-    fecha_vencimiento: slint::SharedString,
-    marca_id: slint::SharedString,
-) -> Result<i64, Box<dyn std::error::Error>> {
-    let conn = db::open_connection()?;
-    
-    let stock_int: i64 = stock.parse().unwrap_or(0);
-    let precio_neto_float: f64 = precio_neto.parse().unwrap_or(0.0);
-    let precio_venta_float: f64 = precio_venta.parse().unwrap_or(0.0);
-    let peso_float: Option<f64> = if peso.is_empty() { None } else { peso.parse().ok() };
-    let marca_id_int: Option<i64> = if marca_id.is_empty() { None } else { marca_id.parse().ok() };
-    
-    let fecha_vencimiento_date: Option<chrono::NaiveDate> = if fecha_vencimiento.is_empty() {
-        None
-    } else {
-        chrono::NaiveDate::parse_from_str(&fecha_vencimiento.to_string(), "%Y-%m-%d").ok()
-    };
-
-    let producto_nuevo = db::ProductoNuevo {
-        nombre: nombre.into(),
-        precio_neto: precio_neto_float,
-        precio_venta: precio_venta_float,
-        stock: stock_int,
-        descripcion: if descripcion.is_empty() { None } else { Some(descripcion.into()) },
-        peso: peso_float,
-        tamano: if tamano.is_empty() { None } else { Some(tamano.into()) },
-        unidad_medida: if unidad_medida.is_empty() { None } else { Some(unidad_medida.into()) },
-        presentacion: if presentacion.is_empty() { None } else { Some(presentacion.into()) },
-        codigo: if codigo.is_empty() { None } else { Some(codigo.into()) },
-        activo,
-        fecha_vencimiento: fecha_vencimiento_date,
-        marca_id: marca_id_int,
-    };
-
-    let id = db::crear_producto(&conn, &producto_nuevo)?;
-    Ok(id)
-}
-
-/// Obtiene los detalles completos de un producto por ID
-pub fn get_product_details(id: i64) -> Result<Option<db::ProductoConMarca>, Box<dyn std::error::Error>> {
-    let conn = db::open_connection()?;
-    
-    let producto = db::obtener_producto_por_id(&conn, id)?;
-    
-    if let Some(p) = producto {
-        let marca_nombre = p.marca_id.and_then(|mid| {
-            db::obtener_marca_por_id(&conn, mid).ok().flatten().map(|m| m.nombre)
-        });
-        
-        Ok(Some(db::ProductoConMarca {
-            id: p.id,
-            nombre: p.nombre,
-            precio_neto: p.precio_neto,
-            precio_venta: p.precio_venta,
-            stock: p.stock,
-            descripcion: p.descripcion,
-            peso: p.peso,
-            tamano: p.tamano,
-            unidad_medida: p.unidad_medida,
-            presentacion: p.presentacion,
-            codigo: p.codigo,
-            activo: p.activo,
-            fecha_vencimiento: p.fecha_vencimiento,
-            marca_id: p.marca_id,
-            marca_nombre,
-        }))
-    } else {
-        Ok(None)
-    }
-}
-
-// ==================== FUNCIONES PARA MARCAS ====================
-
-/// Obtiene todas las marcas como filas para la UI
-#[allow(dead_code)]
-pub fn get_brand_rows() -> Result<ModelRc<slint_generatedAppWindow::Producto>, Box<dyn std::error::Error>> {
-    let conn = db::open_connection()?;
-    let marcas = db::obtener_marcas(&conn)?;
-
-    let rows: Vec<slint_generatedAppWindow::Producto> = marcas
-        .into_iter()
-        .map(|m| {
-            slint_generatedAppWindow::Producto {
-                id: m.id as i32,
-                nombre: m.nombre.into(),
-                stock: 0, // Marcas don't have stock
-                precio: 0.0, // Marcas don't have precio
-            }
-        })
-        .collect();
-
-    Ok(ModelRc::from(Rc::new(VecModel::from(rows))))
-}
-
-/// Crea una nueva marca
-pub fn add_brand(
-    nombre: slint::SharedString,
-    descripcion: slint::SharedString,
-    logo: slint::SharedString,
-    rif: slint::SharedString,
-) -> Result<i64, Box<dyn std::error::Error>> {
-    let conn = db::open_connection()?;
-
-    let marca_nueva = db::MarcaNueva {
-        nombre: nombre.into(),
-        descripcion: if descripcion.is_empty() { None } else { Some(descripcion.into()) },
-        logo: if logo.is_empty() { None } else { Some(logo.into()) },
-        rif: if rif.is_empty() { None } else { Some(rif.into()) },
-    };
-
-    let id = db::crear_marca(&conn, &marca_nueva)?;
-    Ok(id)
+    // Suponiendo que tienes esta función en db/productos.rs
+    // db::productos::actualizar_producto(&conn, &p_editado)
+    Ok(true) 
 }

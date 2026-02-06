@@ -1,13 +1,38 @@
 import { LoginView } from "views/login_view.slint";
+import { Button, VerticalBox, HorizontalBox, StandardTableView } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    title: "Bodex v1.0 - Inicio de Sesión";
+    title: "Bodex v1.0 - Gestión de Inventario";
     width: 900px;
     height: 600px;
     background: #0a0a0f;
 
-    in-out property current-view: "login";
+    // --- PROPIEDADES DE ESTADO ---
+    in-out property <string> current-view: "login";
+    in-out property <[[StandardListViewItem]]> inventory_rows;
 
+    // --- PROPIEDADES PARA EDICIÓN (Soluciona errores set_edit_product_...) ---
+    in-out property <int> edit-product-id;
+    in-out property <string> edit-product-name;
+    in-out property <string> edit-product-precio-venta;
+    in-out property <string> edit-product-stock;
+
+    // --- CALLBACKS (Soluciona errores on_...) ---
+    callback attempt_login(string, string);
+    callback logout();
+    
+    // Callbacks de Inventario
+    callback add_product(
+        string, string, string, string, string, 
+        string, string, string, string, string, 
+        bool, string, string
+    );
+    callback delete_product(int);
+    callback get_product_for_edit(int);
+    callback refresh_inventory();
+    callback close_app();
+
+    // --- ESTRUCTURA PRINCIPAL ---
     Rectangle {
         width: 100%;
         height: 100%;
@@ -15,6 +40,91 @@ export component AppWindow inherits Window {
         border-radius: 8px;
         border-width: 1px;
         border-color: #00ffff;
+        drop-shadow-blur: 20px;
+        drop-shadow-color: rgba(0, 255, 255, 0.3);
+
+        // --- VISTA DE LOGIN ---
+        if (current-view == "login") : login_view := LoginView {
+            width: 100%;
+            height: 100%;
+            loginSuccessful => {
+                root.attempt_login(login_view.username, login_view.password);
+            }
+        }
+
+        // --- VISTA DE DASHBOARD ---
+        if (current-view == "dashboard") : VerticalBox {
+            padding: 20px;
+            spacing: 20px;
+
+            // Encabezado
+            HorizontalBox {
+                alignment: space-between;
+                Text {
+                    text: "📦 BODEX - Panel de Control";
+                    font-size: 24px;
+                    color: #00ffff;
+                    font-weight: 800;
+                }
+                HorizontalBox {
+                    spacing: 10px;
+                    Button {
+                        text: "🔄 Refrescar";
+                        clicked => { root.refresh_inventory(); }
+                    }
+                    Button {
+                        text: "Cerrar Sesión";
+                        clicked => { 
+                            root.logout();
+                            root.current-view = "login"; 
+                        }
+                    }
+                }
+            }
+
+            // Tabla de Inventario
+            Rectangle {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #ff00ff;
+                
+                VerticalBox {
+                    padding: 15px;
+                    HorizontalBox {
+                        alignment: space-between;
+                        Text {
+                            text: "Inventario Actual";
+                            color: white;
+                            font-weight: 700;
+                        }
+                    }
+                    
+                    StandardTableView {
+                        columns: [
+                            { title: "Producto" },
+                            { title: "Precio" },
+                            { title: "Stock" }
+                        ];
+                        rows: root.inventory_rows;
+                        // Al hacer clic en una fila, podemos disparar la edición
+                        current-row-changed(idx) => {
+                            if (idx >= 0) {
+                                root.get_product_for_edit(idx);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Boton de salida rápida
+            HorizontalBox {
+                alignment: end;
+                Button {
+                    text: "Salir del Sistema";
+                    clicked => { root.close_app(); }
+                }
+            }
+        }
     }
-    
-   }
+}
