@@ -1,128 +1,153 @@
-import { LoginView } from "views/login_view.slint";
 import { Button, VerticalBox, HorizontalBox, StandardTableView } from "std-widgets.slint";
+import { LoginView } from "views/login_view.slint";
+import { NuevoProducto } from "views/producto/nuevo_producto.slint";
+import { ListaProductos } from "views/producto/lista_productos.slint";
+import { DashboardView } from "views/dashboard_view.slint";
 
 export component AppWindow inherits Window {
     title: "Bodex v1.0 - Gestión de Inventario";
-    width: 900px;
-    height: 600px;
+    width: 1000px;
+    height: 750px;
     background: #0a0a0f;
 
-    // --- PROPIEDADES DE ESTADO ---
-    in-out property <string> current-view: "login";
-    in-out property <[[StandardListViewItem]]> inventory_rows;
+    // ==========================================
+    // PROPIEDADES DE ESTADO
+    // ==========================================
+    
+    // Navegación principal: "login" o "dashboard"
+    in-out property <string> current-view: "login"; 
+    
+    // Navegación interna: "inicio", "lista", "nuevo"
+    in-out property <string> product-screen: "inicio"; 
 
-    // --- PROPIEDADES PARA EDICIÓN (Soluciona errores set_edit_product_...) ---
+    // Datos de la tabla de inventario
+    in-out property <[[StandardListViewItem]]> inventory-rows;
+    
+    // Cálculo automático para el Dashboard
+    property <int> total-products: inventory-rows.length;
+
+    // Propiedades para edición (Sincronizadas con Rust)
     in-out property <int> edit-product-id;
     in-out property <string> edit-product-name;
     in-out property <string> edit-product-precio-venta;
     in-out property <string> edit-product-stock;
 
-    // --- CALLBACKS (Soluciona errores on_...) ---
-    callback attempt_login(string, string);
+    // ==========================================
+    // CALLBACKS (Puente con Rust)
+    // ==========================================
+    
+    callback attempt-login(string, string);
     callback logout();
     
-    // Callbacks de Inventario
-    callback add_product(
+    callback add-product(
         string, string, string, string, string, 
         string, string, string, string, string, 
         bool, string, string
     );
-    callback delete_product(int);
-    callback get_product_for_edit(int);
-    callback refresh_inventory();
-    callback close_app();
+    callback delete-product(int);
+    callback get-product-for-edit(int);
+    callback refresh-inventory();
+    callback close-app();
 
-    // --- ESTRUCTURA PRINCIPAL ---
+    // ==========================================
+    // ESTRUCTURA VISUAL PRINCIPAL
+    // ==========================================
+
     Rectangle {
         width: 100%;
         height: 100%;
-        background: rgba(10, 10, 15, 0.9);
-        border-radius: 8px;
-        border-width: 1px;
-        border-color: #00ffff;
-        drop-shadow-blur: 20px;
-        drop-shadow-color: rgba(0, 255, 255, 0.3);
+        background: @radial-gradient(circle, #1a1a2e 0%, #0a0a0f 100%);
 
-        // --- VISTA DE LOGIN ---
-        if (current-view == "login") : login_view := LoginView {
-            width: 100%;
-            height: 100%;
-            loginSuccessful => {
-                root.attempt_login(login_view.username, login_view.password);
+        // --- PANTALLA DE ACCESO (LOGIN) ---
+        if (current-view == "login") : LoginView {
+            loginSuccessful => { 
+                root.attempt-login(self.username, self.password);
             }
         }
 
-        // --- VISTA DE DASHBOARD ---
+        // --- INTERFAZ POST-LOGIN ---
         if (current-view == "dashboard") : VerticalBox {
-            padding: 20px;
+            padding: 30px;
             spacing: 20px;
 
-            // Encabezado
+            // Barra Superior de Navegación
             HorizontalBox {
                 alignment: space-between;
-                Text {
-                    text: "📦 BODEX - Panel de Control";
-                    font-size: 24px;
-                    color: #00ffff;
-                    font-weight: 800;
+                VerticalBox {
+                    spacing: 0px;
+                    Text {
+                        text: "BODEX :: CONTROL PANEL";
+                        color: #00ffff;
+                        font-size: 18px;
+                        font-weight: 900;
+                    }
+                    Text {
+                        text: product-screen == "inicio" ? "Resumen General" : 
+                              product-screen == "lista" ? "Inventario Detallado" : "Registro de Suministros";
+                        color: #888;
+                        font-size: 12px;
+                    }
                 }
+                
                 HorizontalBox {
-                    spacing: 10px;
-                    Button {
-                        text: "🔄 Refrescar";
-                        clicked => { root.refresh_inventory(); }
+                    spacing: 15px;
+                    // Botón para volver al Dashboard desde cualquier sub-pantalla
+                    if (product-screen != "inicio") : Button {
+                        text: "🏠 INICIO";
+                        clicked => { root.product-screen = "inicio"; }
                     }
                     Button {
-                        text: "Cerrar Sesión";
-                        clicked => { 
-                            root.logout();
-                            root.current-view = "login"; 
-                        }
+                        text: "SALIR";
+                        clicked => { root.logout(); }
                     }
                 }
             }
 
-            // Tabla de Inventario
+            // Separador Neon
             Rectangle {
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 10px;
-                border-width: 1px;
-                border-color: #ff00ff;
-                
-                VerticalBox {
-                    padding: 15px;
-                    HorizontalBox {
-                        alignment: space-between;
-                        Text {
-                            text: "Inventario Actual";
-                            color: white;
-                            font-weight: 700;
-                        }
-                    }
-                    
-                    StandardTableView {
-                        columns: [
-                            { title: "Producto" },
-                            { title: "Precio" },
-                            { title: "Stock" }
-                        ];
-                        rows: root.inventory_rows;
-                        // Al hacer clic en una fila, podemos disparar la edición
-                        current-row-changed(idx) => {
-                            if (idx >= 0) {
-                                root.get_product_for_edit(idx);
-                            }
-                        }
-                    }
+                height: 1px;
+                background: @linear-gradient(90deg, #00ffff00 0%, #00ffff 50%, #00ffff00 100%);
+                opacity: 0.3;
+            }
+
+            // --- ÁREA DE CONTENIDO DINÁMICO ---
+            
+            // 1. DASHBOARD DE TARJETAS (ESTILO HOME ASSISTANT)
+            if (product-screen == "inicio") : DashboardView {
+                total-products: root.total-products;
+                ir-a-lista => { 
+                    root.product-screen = "lista";
+                    root.refresh-inventory(); 
                 }
             }
-            
-            // Boton de salida rápida
-            HorizontalBox {
-                alignment: end;
-                Button {
-                    text: "Salir del Sistema";
-                    clicked => { root.close_app(); }
+
+            // 2. LISTA DE PRODUCTOS
+            if (product-screen == "lista") : ListaProductos {
+                rows: root.inventory-rows;
+                
+                ir_a_nuevo => { 
+                    root.product-screen = "nuevo"; 
+                }
+                
+                refrescar => { 
+                    root.refresh-inventory(); 
+                }
+            }
+
+            // 3. FORMULARIO DE NUEVO PRODUCTO
+            if (product-screen == "nuevo") : NuevoProducto {
+                volver => { 
+                    root.product-screen = "lista"; 
+                }
+                
+                guardar_producto(nombre, p_venta, stock, sku, peso, venc, m_id) => {
+                    root.add-product(
+                        nombre, "0.0", p_venta, stock, "", 
+                        peso, "", "", "", sku, 
+                        true, venc, m_id
+                    );
+                    // Regresar a la lista tras guardar
+                    root.product-screen = "lista";
                 }
             }
         }

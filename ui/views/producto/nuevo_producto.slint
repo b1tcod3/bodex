@@ -1,0 +1,70 @@
+import { Button, VerticalBox, HorizontalBox, LineEdit } from "std-widgets.slint";
+
+export component NuevoProducto inherits Rectangle {
+    callback guardar_producto(string, string, string, string, string, string, string);
+    callback volver(); // Callback para regresar
+
+    background: transparent;
+
+    VerticalBox {
+        spacing: 20px;
+        
+        HorizontalBox {
+            alignment: space-between;
+            Text {
+                text: "⚡ REGISTRO TÉCNICO";
+                font-size: 22px;
+                color: #ff00ff;
+                font-weight: 800;
+            }
+            Button {
+                text: "⬅ Volver";
+                clicked => { root.volver(); }
+            }
+        }
+
+        Rectangle {
+            background: #161625;
+            border-radius: 10px;
+            border-width: 1px;
+            border-color: #00ffff;
+            padding: 25px;
+
+            VerticalBox {
+                spacing: 15px;
+                // Formulario (Mismo que antes)
+                HorizontalBox {
+                    spacing: 15px;
+                    VerticalBox {
+                        Text { text: "Nombre"; color: #00ffff; }
+                        name_in := LineEdit { }
+                    }
+                    VerticalBox {
+                        Text { text: "Código"; color: #00ffff; }
+                        sku_in := LineEdit { }
+                    }
+                }
+                
+                HorizontalBox {
+                    spacing: 15px;
+                    VerticalBox {
+                        Text { text: "Precio"; color: #00ffff; }
+                        price_in := LineEdit { }
+                    }
+                    VerticalBox {
+                        Text { text: "Stock"; color: #00ffff; }
+                        stock_in := LineEdit { }
+                    }
+                }
+
+                Button {
+                    text: "CONFIRMAR REGISTRO";
+                    height: 45px;
+                    clicked => {
+                        root.guardar_producto(name_in.text, price_in.text, stock_in.text, sku_in.text, "", "", "1");
+                    }
+                }
+            }
+        }
+    }
+}

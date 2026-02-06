@@ -1,0 +1,111 @@
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export component DashboardCard inherits Rectangle {
+    in property <string> title;
+    in property <string> value;
+    in property <color> accent-color;
+    
+    width: 200px;
+    height: 160px;
+    background: @linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+
+    VerticalBox {
+        padding: 20px;
+        // El VerticalBox sí acepta alignment
+        alignment: space-between;
+        
+        // Contenedor del Icono
+        HorizontalBox {
+            alignment: start;
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                background: accent-color.transparentize(80%);
+                border-radius: 20px;
+                
+                Text {
+                    text: "📦";
+                    font-size: 20px;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+
+        // Textos de la Card
+        VerticalBox {
+            spacing: 4px;
+            padding: 0px;
+            Text {
+                text: root.title;
+                color: #aaa;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            Text {
+                text: root.value;
+                color: white;
+                font-size: 28px;
+                font-weight: 800;
+            }
+        }
+    }
+}
+
+export component DashboardView inherits Rectangle {
+    in property <int> total-products;
+    callback ir-a-lista();
+
+    background: transparent;
+
+    VerticalBox {
+        spacing: 40px;
+        alignment: center;
+
+        Text {
+            text: "ESTADÍSTICAS DEL SISTEMA";
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            horizontal-alignment: center;
+        }
+
+        // Fila de Tarjetas
+        HorizontalBox {
+            spacing: 25px;
+            alignment: center;
+            
+            DashboardCard {
+                title: "Productos";
+                value: root.total-products;
+                accent-color: #00ffff;
+            }
+            
+            DashboardCard {
+                title: "Alertas Stock";
+                value: "3";
+                accent-color: #ffaa00;
+            }
+
+            DashboardCard {
+                title: "Categorías";
+                value: "12";
+                accent-color: #ff00ff;
+            }
+        }
+
+        // Botón para navegar
+        HorizontalBox {
+            alignment: center;
+            Button {
+                text: "GESTIONAR INVENTARIO →";
+                height: 45px;
+                clicked => { root.ir-a-lista(); }
+            }
+        }
+    }
+}

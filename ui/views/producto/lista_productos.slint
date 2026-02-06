@@ -1,0 +1,56 @@
+import { Button, VerticalBox, HorizontalBox, StandardTableView } from "std-widgets.slint";
+
+export component ListaProductos inherits Rectangle {
+    in-out property <[[StandardListViewItem]]> rows;
+    
+    // Callbacks
+    callback refrescar();
+    callback ir_a_nuevo(); // Nuevo callback para navegación
+
+    background: transparent;
+
+    VerticalBox {
+        spacing: 20px;
+        padding: 0px;
+
+        HorizontalBox {
+            alignment: space-between;
+            Text {
+                text: "📋 INVENTARIO";
+                font-size: 24px;
+                color: #00ffff;
+                font-weight: 800;
+            }
+            
+            HorizontalBox {
+                spacing: 10px;
+                Button {
+                    text: "➕ Nuevo Producto";
+                    primary: true;
+                    clicked => { root.ir_a_nuevo(); }
+                }
+                Button {
+                    text: "🔄";
+                    clicked => { root.refrescar(); }
+                }
+            }
+        }
+
+        Rectangle {
+            background: #161625;
+            border-radius: 10px;
+            border-width: 1px;
+            border-color: #ff00ff;
+            clip: true;
+
+            StandardTableView {
+                columns: [
+                    { title: "Producto" },
+                    { title: "Precio" },
+                    { title: "Stock" }
+                ];
+                rows: root.rows;
+            }
+        }
+    }
+}
