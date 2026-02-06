@@ -6,11 +6,11 @@ import { DashboardView } from "views/dashboard_view.slint";
 
 export component AppWindow inherits Window {
     title: "Bodex v1.0 - Gestión de Inventario";
-    width: 1000px;
-    height: 750px;
+    preferred-width: 1000px;
+    preferred-height: 750px;
+    min-width: 800px;
+    min-height: 600px;
     background: #0a0a0f;
-    maximizable: true;
-    resizable: true;
 
     // ==========================================
     // PROPIEDADES DE ESTADO
