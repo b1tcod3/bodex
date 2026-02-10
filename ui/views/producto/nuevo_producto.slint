@@ -1,4 +1,4 @@
-import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox, ScrollView } from "std-widgets.slint";
 
 export component NuevoProducto inherits Rectangle {
     callback guardar_producto(string, string, string, string, string, string, string, string, string, string, string, string, string);
@@ -8,151 +8,165 @@ export component NuevoProducto inherits Rectangle {
 
     VerticalBox {
         spacing: 15px;
+        padding: 0;
 
+        // --- CABECERA ---
         HorizontalBox {
             alignment: space-between;
+            height: 35px;
             Text {
-                text: "REGISTRO DE PRODUCTOS";
-                font-size: 22px;
+                text: "REGISTRO TÉCNICO DE PRODUCTOS";
+                font-size: 16px;
                 color: #00ffff;
                 font-weight: 800;
+                vertical-alignment: center;
             }
             Button {
-                text: "Volver";
+                text: "CERRAR";
+                height: 28px;
                 clicked => { root.volver(); }
             }
         }
 
-        Rectangle {
-            background: #161625;
-            border-radius: 10px;
-            border-width: 1px;
-            border-color: #00ffff;
-
-            VerticalBox {
+        // --- CUERPO DEL FORMULARIO (Layout 2x2) ---
+        ScrollView {
+            vertical-stretch: 1;
+            
+            GridLayout {
                 spacing: 12px;
+                padding: 2px;
+
+                // --- FILA 1, COLUMNA 1: IDENTIFICACIÓN ---
+                Row {
+                    Rectangle {
+                        background: #1a1a2e;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #00ffff33;
+                        VerticalBox {
+                            padding: 10px; spacing: 8px;
+                            Text { text: "1. IDENTIFICACIÓN"; color: #ff00ff; font-size: 11px; font-weight: 700; }
+                            VerticalBox { spacing: 2px; padding: 0;
+                                Text { text: "Nombre *"; color: #888; font-size: 9px; }
+                                name_in := LineEdit { placeholder-text: "Nombre"; height: 24px; }
+                            }
+                            HorizontalBox {
+                                spacing: 8px; padding: 0;
+                                VerticalBox { spacing: 2px; padding: 0;
+                                    Text { text: "SKU *"; color: #888; font-size: 9px; }
+                                    sku_in := LineEdit { placeholder-text: "Código"; height: 24px; }
+                                }
+                            }
+                            VerticalBox { spacing: 2px; padding: 0;
+                                Text { text: "Descripción"; color: #888; font-size: 9px; }
+                                desc_in := LineEdit { placeholder-text: "Detalles..."; height: 24px; }
+                            }
+                        }
+                    }
+
+                    // --- FILA 1, COLUMNA 2: PRECIOS ---
+                    Rectangle {
+                        background: #1a1a2e;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #00ffff33;
+                        VerticalBox {
+                            padding: 10px; spacing: 8px;
+                            Text { text: "2. PRECIOS Y STOCK"; color: #ff00ff; font-size: 11px; font-weight: 700; }
+                            HorizontalBox {
+                                spacing: 8px; padding: 0;
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "P. Neto"; color: #888; font-size: 9px; }
+                                    p_neto_in := LineEdit { text: "0.00"; height: 24px; } }
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "P. Venta *"; color: #888; font-size: 9px; }
+                                    p_venta_in := LineEdit { text: "0.00"; height: 24px; } }
+                            }
+                            HorizontalBox {
+                                spacing: 8px; padding: 0;
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "Stock *"; color: #888; font-size: 9px; }
+                                    stock_in := LineEdit { text: "0"; height: 24px; } }
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "U. Medida"; color: #888; font-size: 9px; }
+                                    u_medida_in := LineEdit { text: "un"; height: 24px; } }
+                            }
+                        }
+                    }
+                }
+
+                // --- FILA 2, COLUMNA 1: DIMENSIONES ---
+                Row {
+                    Rectangle {
+                        background: #1a1a2e;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #00ffff33;
+                        VerticalBox {
+                            padding: 10px; spacing: 8px;
+                            Text { text: "3. DIMENSIONES"; color: #ff00ff; font-size: 11px; font-weight: 700; }
+                            HorizontalBox {
+                                spacing: 8px; padding: 0;
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "Peso (kg)"; color: #888; font-size: 9px; }
+                                    peso_in := LineEdit { text: "0.00"; height: 24px; } }
+                                VerticalBox { spacing: 2px; padding: 0; Text { text: "Tamaño"; color: #888; font-size: 9px; }
+                                    tam_in := LineEdit { text: "N/A"; height: 24px; } }
+                            }
+                            VerticalBox { spacing: 2px; padding: 0; Text { text: "Presentación"; color: #888; font-size: 9px; }
+                                pres_in := LineEdit { text: "Unidad"; height: 24px; } }
+                        }
+                    }
+
+                    // --- FILA 2, COLUMNA 2: LOGÍSTICA ---
+                    Rectangle {
+                        background: #1a1a2e;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #00ffff33;
+                        VerticalBox {
+                            padding: 10px; spacing: 8px;
+                            Text { text: "4. LOGÍSTICA"; color: #ff00ff; font-size: 11px; font-weight: 700; }
+                            VerticalBox { spacing: 2px; padding: 0; Text { text: "Vencimiento (YYYY-MM-DD)"; color: #888; font-size: 9px; }
+                                venc_in := LineEdit { placeholder-text: "2024-12-31"; height: 24px; } }
+                            HorizontalBox {
+                                spacing: 8px; padding: 0;
+                                VerticalBox { spacing: 2px; padding: 0; width: 60px; Text { text: "Marca ID"; color: #888; font-size: 9px; }
+                                    marca_in := LineEdit { text: "1"; height: 24px; } }
+                                VerticalBox {
+                                    alignment: end;
+                                    activo_check := CheckBox {
+                                        text: "Activo";
+                                        checked: true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- BOTÓN DE GUARDADO ---
+        Rectangle {
+            height: 50px;
+            save_btn := Rectangle {
+                width: 100%; height: 40px;
+                border-radius: 4px;
+                background: btn_area.has-hover ? #00ffff : #008a8a;
+                border-width: 1px;
+                border-color: #00ffff;
+                animate background { duration: 100ms; }
 
                 Text {
-                    text: "DATOS BÁSICOS";
-                    font-size: 14px;
-                    color: #ff00ff;
-                    font-weight: 700;
+                    text: "REGISTRAR PRODUCTO EN EL SISTEMA";
+                    color: btn_area.has-hover ? #000 : #fff;
+                    font-weight: 800;
+                    font-size: 12px;
                 }
 
-                HorizontalBox {
-                    spacing: 15px;
-                    VerticalBox {
-                        Text { text: "Nombre *"; color: #00ffff; font-size: 12px; }
-                        name_in := LineEdit { placeholder-text: "Nombre del producto"; }
-                    }
-                    VerticalBox {
-                        Text { text: "Código / SKU"; color: #00ffff; font-size: 12px; }
-                        sku_in := LineEdit { placeholder-text: "Código de barras"; }
-                    }
-                }
-
-                VerticalBox {
-                    Text { text: "Descripción"; color: #00ffff; font-size: 12px; }
-                    desc_in := LineEdit { placeholder-text: "Descripción del producto"; }
-                }
-
-                Text {
-                    text: "PRECIOS";
-                    font-size: 14px;
-                    color: #ff00ff;
-                    font-weight: 700;
-                }
-
-                HorizontalBox {
-                    spacing: 15px;
-                    VerticalBox {
-                        Text { text: "Precio Neto *"; color: #00ffff; font-size: 12px; }
-                        precio_neto_in := LineEdit { placeholder-text: "0.00"; }
-                    }
-                    VerticalBox {
-                        Text { text: "Precio Venta *"; color: #00ffff; font-size: 12px; }
-                        precio_venta_in := LineEdit { placeholder-text: "0.00"; }
-                    }
-                }
-
-                Text {
-                    text: "INVENTARIO";
-                    font-size: 14px;
-                    color: #ff00ff;
-                    font-weight: 700;
-                }
-
-                HorizontalBox {
-                    spacing: 15px;
-                    VerticalBox {
-                        Text { text: "Stock *"; color: #00ffff; font-size: 12px; }
-                        stock_in := LineEdit { placeholder-text: "0"; }
-                    }
-                    VerticalBox {
-                        Text { text: "Unidad Medida"; color: #00ffff; font-size: 12px; }
-                        unidad_medida_in := LineEdit { placeholder-text: "kg, lt, pza"; }
-                    }
-                }
-
-                Text {
-                    text: "MEDIDAS FÍSICAS";
-                    font-size: 14px;
-                    color: #ff00ff;
-                    font-weight: 700;
-                }
-
-                HorizontalBox {
-                    spacing: 15px;
-                    VerticalBox {
-                        Text { text: "Peso"; color: #00ffff; font-size: 12px; }
-                        peso_in := LineEdit { placeholder-text: "0.00"; }
-                    }
-                    VerticalBox {
-                        Text { text: "Tamaño"; color: #00ffff; font-size: 12px; }
-                        tamano_in := LineEdit { placeholder-text: "Pequeño, Mediano"; }
-                    }
-                }
-
-                VerticalBox {
-                    Text { text: "Presentación"; color: #00ffff; font-size: 12px; }
-                    presentacion_in := LineEdit { placeholder-text: "Frasco, Caja, Bolsa"; }
-                }
-
-                Text {
-                    text: "ADICIONALES";
-                    font-size: 14px;
-                    color: #ff00ff;
-                    font-weight: 700;
-                }
-
-                HorizontalBox {
-                    spacing: 15px;
-                    VerticalBox {
-                        Text { text: "Fecha Vencimiento"; color: #00ffff; font-size: 12px; }
-                        vencimiento_in := LineEdit { placeholder-text: "YYYY-MM-DD"; }
-                    }
-                    VerticalBox {
-                        Text { text: "Marca ID"; color: #00ffff; font-size: 12px; }
-                        marca_id_in := LineEdit { placeholder-text: "ID (opcional)"; }
-                    }
-                }
-
-                HorizontalBox {
-                    activo_in := CheckBox {
-                        text: "Producto activo";
-                        checked: true;
-                    }
-                }
-
-                Button {
-                    text: "GUARDAR PRODUCTO";
-                    height: 45px;
+                btn_area := TouchArea {
                     clicked => {
                         root.guardar_producto(
-                            name_in.text, precio_neto_in.text, precio_venta_in.text, stock_in.text,
-                            desc_in.text, peso_in.text, tamano_in.text, unidad_medida_in.text,
-                            presentacion_in.text, sku_in.text, vencimiento_in.text,
-                            activo_in.checked ? "true" : "false", marca_id_in.text
+                            name_in.text, p_neto_in.text, p_venta_in.text, stock_in.text,
+                            desc_in.text, peso_in.text, tam_in.text, u_medida_in.text,
+                            pres_in.text, sku_in.text, activo_check.checked ? "true" : "false",
+                            venc_in.text, marca_in.text
                         );
                     }
                 }
