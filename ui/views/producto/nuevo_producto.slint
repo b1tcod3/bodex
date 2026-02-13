@@ -1,4 +1,4 @@
-import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox, ScrollView, TextArea } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, LineEdit, CheckBox, ScrollView, TextEdit } from "std-widgets.slint";
 
 export component NuevoProducto inherits Rectangle {
     callback guardar_producto(string, string, string, string, string, string, string, string, string, string, string, string, string);
@@ -59,7 +59,12 @@ export component NuevoProducto inherits Rectangle {
                             }
                             VerticalBox { spacing: 2px; padding: 0;
                                 Text { text: "Descripción"; color: #888; font-size: 9px; }
-                                desc_in := TextArea { placeholder-text: "Detalles..."; height: 50px; horizontal-stretch: 1; }
+                                desc_in := TextEdit { 
+                                    placeholder-text: "Detalles..."; 
+                                    height: 50px; 
+                                    horizontal-stretch: 1;
+                                    wrap: word-wrap;
+                                }
                             }
                         }
                     }
