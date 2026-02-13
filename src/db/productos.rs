@@ -1,5 +1,5 @@
+use crate::models::{Producto, ProductoConMarca, ProductoNuevo};
 use rusqlite::{params, Connection, Result, Row};
-use crate::models::{Producto, ProductoNuevo, ProductoConMarca};
 
 /// Crea la tabla de productos si no existe
 pub fn create_table(conn: &Connection) -> Result<()> {
@@ -32,11 +32,11 @@ pub fn obtener_productos(conn: &Connection) -> Result<Vec<Producto>> {
         "SELECT id, nombre, precio_neto, precio_venta, stock, descripcion,
                 peso, tamano, unidad_medida, presentacion, codigo, activo,
                 fecha_vencimiento, marca_id
-         FROM productos ORDER BY nombre ASC"
+         FROM productos ORDER BY nombre ASC",
     )?;
 
     let productos = stmt.query_map([], mapear_producto)?;
-    
+
     let mut resultado = Vec::new();
     for p in productos {
         resultado.push(p?);
@@ -53,7 +53,7 @@ pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConM
                 m.nombre as marca_nombre
          FROM productos p
          LEFT JOIN marcas m ON p.marca_id = m.id
-         ORDER BY p.nombre ASC"
+         ORDER BY p.nombre ASC",
     )?;
 
     let productos = stmt.query_map([], |row| {
@@ -92,9 +92,19 @@ pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
             activo, fecha_vencimiento, marca_id
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
         params![
-            p.nombre, p.precio_neto, p.precio_venta, p.stock, p.descripcion,
-            p.peso, p.tamano, p.unidad_medida, p.presentacion, p.codigo,
-            if p.activo { 1 } else { 0 }, p.fecha_vencimiento, p.marca_id
+            p.nombre,
+            p.precio_neto,
+            p.precio_venta,
+            p.stock,
+            p.descripcion,
+            p.peso,
+            p.tamano,
+            p.unidad_medida,
+            p.presentacion,
+            p.codigo,
+            if p.activo { 1 } else { 0 },
+            p.fecha_vencimiento,
+            p.marca_id
         ],
     )?;
     Ok(conn.last_insert_rowid())

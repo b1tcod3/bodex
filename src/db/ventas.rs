@@ -1,5 +1,5 @@
+use crate::models::{DetalleVenta, Venta};
 use rusqlite::{params, Connection, Result};
-use crate::models::{Venta, DetalleVenta};
 
 /// Crea la tabla principal de ventas
 pub fn create_table(conn: &Connection) -> Result<()> {
@@ -37,10 +37,10 @@ pub fn create_detalle_table(conn: &Connection) -> Result<()> {
 
 /// Registra una venta completa y actualiza el stock usando una Transacción
 pub fn registrar_venta(
-    conn: &mut Connection, 
-    usuario_id: i64, 
-    cliente: &str, 
-    detalles: Vec<DetalleVenta>
+    conn: &mut Connection,
+    usuario_id: i64,
+    cliente: &str,
+    detalles: Vec<DetalleVenta>,
 ) -> Result<i64> {
     // Calculamos el total de la venta
     let total_venta: f64 = detalles.iter().map(|d| d.subtotal).sum();
@@ -53,7 +53,7 @@ pub fn registrar_venta(
         "INSERT INTO ventas (total, usuario_id, cliente_nombre) VALUES (?1, ?2, ?3)",
         params![total_venta, usuario_id, cliente],
     )?;
-    
+
     let venta_id = tx.last_insert_rowid();
 
     // 2. Insertar detalles y descontar stock
@@ -70,8 +70,8 @@ pub fn registrar_venta(
             "UPDATE productos SET stock = stock - ?1 WHERE id = ?2 AND stock >= ?1",
             params![item.cantidad, item.producto_id],
         )?;
-        
-        // Verificación de seguridad: si el stock quedó negativo, SQLite lanzará un error 
+
+        // Verificación de seguridad: si el stock quedó negativo, SQLite lanzará un error
         // o podemos verificar las filas afectadas.
     }
 
@@ -84,7 +84,7 @@ pub fn registrar_venta(
 /// Obtener el historial de ventas (Resumen)
 pub fn obtener_historial(conn: &Connection) -> Result<Vec<Venta>> {
     let mut stmt = conn.prepare(
-        "SELECT id, fecha, total, usuario_id, cliente_nombre FROM ventas ORDER BY fecha DESC"
+        "SELECT id, fecha, total, usuario_id, cliente_nombre FROM ventas ORDER BY fecha DESC",
     )?;
 
     let ventas_iter = stmt.query_map([], |row| {
@@ -98,6 +98,8 @@ pub fn obtener_historial(conn: &Connection) -> Result<Vec<Venta>> {
     })?;
 
     let mut resultado = Vec::new();
-    for v in ventas_iter { resultado.push(v?); }
+    for v in ventas_iter {
+        resultado.push(v?);
+    }
     Ok(resultado)
 }

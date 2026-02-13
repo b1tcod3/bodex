@@ -1,5 +1,5 @@
-use rusqlite::{params, Connection, Result};
 use crate::models::{Marca, MarcaNueva};
+use rusqlite::{params, Connection, Result};
 
 /// Crea la tabla de marcas si no existe
 pub fn create_table(conn: &Connection) -> Result<()> {
@@ -18,9 +18,8 @@ pub fn create_table(conn: &Connection) -> Result<()> {
 
 /// Obtener todas las marcas ordenadas por nombre
 pub fn obtener_marcas(conn: &Connection) -> Result<Vec<Marca>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, nombre, descripcion, logo, rif FROM marcas ORDER BY nombre ASC"
-    )?;
+    let mut stmt =
+        conn.prepare("SELECT id, nombre, descripcion, logo, rif FROM marcas ORDER BY nombre ASC")?;
 
     let marcas_iter = stmt.query_map([], |row| {
         Ok(Marca {
@@ -50,7 +49,8 @@ pub fn crear_marca(conn: &Connection, m: &MarcaNueva) -> Result<i64> {
 
 /// Obtener una marca específica por su ID
 pub fn obtener_marca_por_id(conn: &Connection, id: i64) -> Result<Option<Marca>> {
-    let mut stmt = conn.prepare("SELECT id, nombre, descripcion, logo, rif FROM marcas WHERE id = ?1")?;
+    let mut stmt =
+        conn.prepare("SELECT id, nombre, descripcion, logo, rif FROM marcas WHERE id = ?1")?;
     let mut rows = stmt.query(params![id])?;
 
     if let Some(row) = rows.next()? {

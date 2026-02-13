@@ -1,6 +1,6 @@
-use rusqlite::{params, Connection, Result};
-use crate::models::{Usuario, Rol};
+use crate::models::{Rol, Usuario};
 use chrono::NaiveDateTime;
+use rusqlite::{params, Connection, Result};
 
 /// Crea la tabla de usuarios si no existe
 pub fn create_table(conn: &Connection) -> Result<()> {
@@ -20,11 +20,7 @@ pub fn create_table(conn: &Connection) -> Result<()> {
 
 /// Inserta un usuario administrador inicial si la tabla está vacía
 pub fn seed_admin(conn: &Connection) -> Result<()> {
-    let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM usuarios",
-        [],
-        |r| r.get(0)
-    )?;
+    let count: i64 = conn.query_row("SELECT COUNT(*) FROM usuarios", [], |r| r.get(0))?;
 
     if count == 0 {
         conn.execute(
@@ -42,7 +38,7 @@ pub fn validar_usuario(conn: &Connection, user: &str, pass: &str) -> Result<Opti
     let mut stmt = conn.prepare(
         "SELECT id, username, password_hash, rol, activo, ultimo_login 
          FROM usuarios 
-         WHERE username = ?1 AND activo = 1"
+         WHERE username = ?1 AND activo = 1",
     )?;
 
     let mut rows = stmt.query(params![user])?;
@@ -68,12 +64,17 @@ pub fn validar_usuario(conn: &Connection, user: &str, pass: &str) -> Result<Opti
             }));
         }
     }
-    
+
     Ok(None)
 }
 
 /// Crea un nuevo usuario en el sistema
-pub fn crear_usuario(conn: &Connection, username: &str, password_hash: &str, rol: Rol) -> Result<i64> {
+pub fn crear_usuario(
+    conn: &Connection,
+    username: &str,
+    password_hash: &str,
+    rol: Rol,
+) -> Result<i64> {
     conn.execute(
         "INSERT INTO usuarios (username, password_hash, rol) VALUES (?1, ?2, ?3)",
         params![username, password_hash, rol.to_string()],

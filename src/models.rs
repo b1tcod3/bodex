@@ -133,7 +133,7 @@ pub struct Venta {
     pub fecha: NaiveDateTime,
     pub total: f64,
     pub usuario_id: Option<i64>,        // Para saber quién vendió
-    pub cliente_nombre: Option<String>,  // Para saber a quién se vendió
+    pub cliente_nombre: Option<String>, // Para saber a quién se vendió
 }
 
 #[derive(Debug, Clone)]
