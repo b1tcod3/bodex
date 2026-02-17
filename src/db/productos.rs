@@ -1,7 +1,7 @@
 use crate::models::{Producto, ProductoConMarca, ProductoNuevo};
 use rusqlite::{params, Connection, Result, Row};
 
-/// Crea la tabla de productos si no existe
+/// Crea la tabla de productos actualizada a la nueva arquitectura
 pub fn create_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS productos (
@@ -11,14 +11,15 @@ pub fn create_table(conn: &Connection) -> Result<()> {
             precio_venta REAL NOT NULL DEFAULT 0,
             stock INTEGER NOT NULL DEFAULT 0,
             descripcion TEXT,
-            peso REAL,
-            tamano TEXT,
-            unidad_medida TEXT,
-            presentacion TEXT,
             codigo TEXT UNIQUE,
             activo INTEGER NOT NULL DEFAULT 1,
-            fecha_vencimiento DATE,
             marca_id INTEGER,
+            -- Nuevos campos de Enums y Cantidades
+            medida_p_id INTEGER NOT NULL,
+            cantidad_p REAL NOT NULL DEFAULT 0,
+            medida_s_id INTEGER,
+            cantidad_s REAL,
+            empaque_id INTEGER NOT NULL,
             FOREIGN KEY (marca_id) REFERENCES marcas(id) ON DELETE SET NULL
         )",
         [],
@@ -26,12 +27,12 @@ pub fn create_table(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-/// Obtener todos los productos básicos
+/// Obtener todos los productos básicos (mapeo directo a struct Producto)
 pub fn obtener_productos(conn: &Connection) -> Result<Vec<Producto>> {
     let mut stmt = conn.prepare(
         "SELECT id, nombre, precio_neto, precio_venta, stock, descripcion,
-                peso, tamano, unidad_medida, presentacion, codigo, activo,
-                fecha_vencimiento, marca_id
+                codigo, activo, marca_id, medida_p_id, cantidad_p, 
+                medida_s_id, cantidad_s, empaque_id
          FROM productos ORDER BY nombre ASC",
     )?;
 
@@ -44,13 +45,12 @@ pub fn obtener_productos(conn: &Connection) -> Result<Vec<Producto>> {
     Ok(resultado)
 }
 
-/// Obtener productos con el nombre de su marca (para la tabla principal de la UI)
+/// Obtener productos con marca para la UI
 pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConMarca>> {
     let mut stmt = conn.prepare(
         "SELECT p.id, p.nombre, p.precio_neto, p.precio_venta, p.stock, 
-                p.descripcion, p.peso, p.tamano, p.unidad_medida, p.presentacion, 
-                p.codigo, p.activo, p.fecha_vencimiento, p.marca_id,
-                m.nombre as marca_nombre
+                p.descripcion, p.codigo, p.activo, p.marca_id, m.nombre as marca_nombre,
+                p.medida_p_id, p.cantidad_p, p.empaque_id
          FROM productos p
          LEFT JOIN marcas m ON p.marca_id = m.id
          ORDER BY p.nombre ASC",
@@ -64,15 +64,13 @@ pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConM
             precio_venta: row.get(3)?,
             stock: row.get(4)?,
             descripcion: row.get(5)?,
-            peso: row.get(6)?,
-            tamano: row.get(7)?,
-            unidad_medida: row.get(8)?,
-            presentacion: row.get(9)?,
-            codigo: row.get(10)?,
-            activo: row.get::<_, i32>(11)? != 0,
-            fecha_vencimiento: row.get(12)?,
-            marca_id: row.get(13)?,
-            marca_nombre: row.get(14)?,
+            codigo: row.get(6)?,
+            activo: row.get::<_, i32>(7)? != 0,
+            marca_id: row.get(8)?,
+            marca_nombre: row.get(9)?,
+            medida_p_id: row.get(10)?,
+            cantidad_p: row.get(11)?,
+            empaque_id: row.get(12)?,
         })
     })?;
 
@@ -83,13 +81,13 @@ pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConM
     Ok(resultado)
 }
 
-/// Insertar un nuevo producto
+/// Insertar un nuevo producto usando la estructura ProductoNuevo
 pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
     conn.execute(
         "INSERT INTO productos (
             nombre, precio_neto, precio_venta, stock, descripcion, 
-            peso, tamano, unidad_medida, presentacion, codigo, 
-            activo, fecha_vencimiento, marca_id
+            codigo, activo, marca_id, medida_p_id, cantidad_p, 
+            medida_s_id, cantidad_s, empaque_id
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
         params![
             p.nombre,
@@ -97,14 +95,14 @@ pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
             p.precio_venta,
             p.stock,
             p.descripcion,
-            p.peso,
-            p.tamano,
-            p.unidad_medida,
-            p.presentacion,
             p.codigo,
             if p.activo { 1 } else { 0 },
-            p.fecha_vencimiento,
-            p.marca_id
+            p.marca_id,
+            p.medida_p_id,
+            p.cantidad_p,
+            p.medida_s_id,
+            p.cantidad_s,
+            p.empaque_id
         ],
     )?;
     Ok(conn.last_insert_rowid())
@@ -116,7 +114,7 @@ pub fn eliminar_producto(conn: &Connection, id: i64) -> Result<bool> {
     Ok(filas > 0)
 }
 
-/// Función auxiliar privada para mapear filas a la estructura Producto
+/// Mapeo limpio de filas SQL a la estructura Producto
 fn mapear_producto(row: &Row) -> Result<Producto> {
     Ok(Producto {
         id: row.get(0)?,
@@ -125,13 +123,13 @@ fn mapear_producto(row: &Row) -> Result<Producto> {
         precio_venta: row.get(3)?,
         stock: row.get(4)?,
         descripcion: row.get(5)?,
-        peso: row.get(6)?,
-        tamano: row.get(7)?,
-        unidad_medida: row.get(8)?,
-        presentacion: row.get(9)?,
-        codigo: row.get(10)?,
-        activo: row.get::<_, i32>(11)? != 0,
-        fecha_vencimiento: row.get(12)?,
-        marca_id: row.get(13)?,
+        codigo: row.get(6)?,
+        activo: row.get::<_, i32>(7)? != 0,
+        marca_id: row.get(8)?,
+        medida_p_id: row.get(9)?,
+        cantidad_p: row.get(10)?,
+        medida_s_id: row.get(11)?,
+        cantidad_s: row.get(12)?,
+        empaque_id: row.get(13)?,
     })
 }

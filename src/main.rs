@@ -7,34 +7,70 @@ mod ui_handlers;
 // 2. Importaciones de Slint y estándares
 slint::include_modules!();
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 3. Inicialización de la persistencia
-    // Abrimos la conexión y nos aseguramos de que las tablas (y el admin) existan
-    let conn = db::open_connection()?;
-    db::init_db(&conn)?;
+fn main() {
+    // --- CONFIGURACIÓN DEL RENDERIZADOR ---
+    // Forzamos el backend de software antes de que Slint se inicialice.
+    // Esto evita errores de GPU en entornos como WSL, VMs o drivers antiguos.
+    #[cfg(feature = "desktop")]
+    {
+        std::env::set_var("SLINT_BACKEND", "software");
+    }
 
-    // Cerramos la conexión inicial para dejar que cada handler
-    // abra la suya propia si usas un enfoque de conexión por hilo,
-    // o puedes mantenerla abierta si prefieres pasarla.
+    // Verificar si hay display disponible (evita pánicos en servidores puros)
+    let has_display = std::env::var("DISPLAY").is_ok()
+        || cfg!(target_os = "windows")
+        || cfg!(target_os = "macos");
+
+    // 3. Inicialización de la persistencia (Base de Datos)
+    let conn = match db::open_connection() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Error crítico: No se pudo abrir la base de datos: {}", e);
+            return;
+        }
+    };
+
+    if let Err(e) = db::init_db(&conn) {
+        eprintln!("Error crítico: No se pudo inicializar las tablas: {}", e);
+        return;
+    }
+    // Cerramos la conexión inicial; los handlers abrirán las suyas propias
     drop(conn);
 
-    // 4. Creación de la instancia de la interfaz
-    let ui = AppWindow::new()?;
+    if has_display {
+        // 4. Creación de la instancia de la interfaz
+        let ui = match AppWindow::new() {
+            Ok(ui) => ui,
+            Err(e) => {
+                eprintln!("Error al crear la ventana principal: {}", e);
+                return;
+            }
+        };
 
-    // Habilitar maximizar y redimensionar
-    ui.window().set_maximized(false);
-    ui.window().set_minimized(false);
+        // Configuración de ventana
+        ui.window().set_maximized(false);
 
-    // 5. Configuración de la lógica (Handlers)
-    // Pasamos la referencia de la UI a nuestro módulo de callbacks
-    ui_handlers::setup_callbacks(&ui);
+        // 5. Configuración de la lógica (Handlers de botones y eventos)
+        ui_handlers::setup_callbacks(&ui);
 
-    // 6. Carga de estado inicial (si fuera necesario)
-    ui_handlers::load_initial_data(&ui);
+        // 6. Carga de estado inicial (Cargar productos en la tabla, etc.)
+        ui_handlers::load_initial_data(&ui);
 
-    // 7. Ejecución del bucle principal de la aplicación
-    println!("Bodex v1.0 - Sistema iniciado correctamente.");
-    ui.run()?;
+        // 7. Ejecución del bucle principal
+        println!("-----------------------------------------");
+        println!("BODEX v1.0 - Gestión de Inventario");
+        println!("Estado: Iniciado con Renderizador de Software");
+        println!("-----------------------------------------");
 
-    Ok(())
+        if let Err(e) = ui.run() {
+            eprintln!("Error durante la ejecución de la App: {}", e);
+        }
+    } else {
+        // Modo sin GUI (Headless)
+        println!("Bodex v1.0 - Modo sin GUI detectado.");
+        println!("La base de datos se verificó correctamente.");
+        println!(
+            "Nota: Para ver la interfaz, asegúrese de tener un servidor X11 o Wayland activo."
+        );
+    }
 }

@@ -13,7 +13,7 @@ pub struct ProductInfo {
     pub stock: i64,
 }
 
-/// Caché global segura para hilos (Thread-safe) mediante OnceLock y Mutex
+/// Caché global segura para hilos
 static LOADED_PRODUCTS: OnceLock<Mutex<Vec<ProductInfo>>> = OnceLock::new();
 
 /// Helper para obtener acceso al caché global
@@ -30,22 +30,19 @@ fn parse_num<T: std::str::FromStr>(val: &SharedString, default: T) -> T {
     }
 }
 
-/// Obtiene los productos de la base de datos y los convierte en el formato
-/// [[StandardListViewItem]] que requiere el StandardTableView de tu .slint
-pub fn get_inventory_rows(
-) -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
+/// Obtiene los productos de la DB y los formatea para la tabla de Slint
+pub fn get_inventory_rows() -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
-    // Usamos el submódulo productos para obtener los datos
     let productos = db::productos::obtener_productos_con_marca(&conn)?;
 
-    // 1. Sincronizamos el caché interno para que las acciones por índice (editar/eliminar) funcionen
+    // 1. Actualizar caché interno
     let product_infos: Vec<ProductInfo> = productos
         .iter()
         .map(|p| ProductInfo {
             id: p.id,
             nombre: p.nombre.clone(),
             precio_venta: p.precio_venta,
-            stock: p.stock,
+            stock: p.stock as i64,
         })
         .collect();
 
@@ -54,7 +51,7 @@ pub fn get_inventory_rows(
         *cache = product_infos;
     }
 
-    // 2. Transformamos los datos al formato de celdas de Slint
+    // 2. Formatear filas para la UI (Nombre, Precio, Stock, Marca)
     let rows: Vec<ModelRc<StandardListViewItem>> = productos
         .into_iter()
         .map(|p| {
@@ -62,6 +59,7 @@ pub fn get_inventory_rows(
                 StandardListViewItem::from(SharedString::from(p.nombre)),
                 StandardListViewItem::from(SharedString::from(format!("{:.2}", p.precio_venta))),
                 StandardListViewItem::from(SharedString::from(p.stock.to_string())),
+                StandardListViewItem::from(SharedString::from(p.marca_nombre.unwrap_or_else(|| "Sin Marca".into()))),
             ];
             ModelRc::from(Rc::new(VecModel::from(row_data)))
         })
@@ -70,13 +68,13 @@ pub fn get_inventory_rows(
     Ok(ModelRc::from(Rc::new(VecModel::from(rows))))
 }
 
-/// Recupera la información de un producto basándose en su posición en la tabla de la UI
+/// Recupera la información de un producto por su índice en la tabla
 pub fn get_product_by_index(index: i32) -> Option<ProductInfo> {
     let cache = get_cache().lock().unwrap();
     cache.get(index as usize).cloned()
 }
 
-/// Elimina un producto de la base de datos usando el índice de la tabla
+/// Elimina un producto usando el índice de la UI
 pub fn delete_product_by_index(index: i32) -> Result<bool, Box<dyn std::error::Error>> {
     if let Some(product) = get_product_by_index(index) {
         let conn = db::open_connection()?;
@@ -87,24 +85,25 @@ pub fn delete_product_by_index(index: i32) -> Result<bool, Box<dyn std::error::E
     }
 }
 
-/// Agrega un nuevo producto procesando los strings que vienen de los inputs de Slint
+/// Agrega un nuevo producto con la lógica de Enums (IDs) y Doble Medida
 pub fn add_product(
     nombre: SharedString,
     precio_neto: SharedString,
     precio_venta: SharedString,
     stock: SharedString,
     descripcion: SharedString,
-    peso: SharedString,
-    tamano: SharedString,
-    unidad_medida: SharedString,
-    presentacion: SharedString,
     codigo: SharedString,
-    fecha_vencimiento: SharedString,
     activo_str: SharedString,
     marca_id: SharedString,
+    // Nuevos campos de Enums y Medidas
+    medida_p_id: SharedString,
+    cantidad_p: SharedString,
+    medida_s_id: SharedString,
+    cantidad_s: SharedString,
+    empaque_id: SharedString,
 ) -> Result<i64, Box<dyn std::error::Error>> {
-    let activo = activo_str == "true";
     let conn = db::open_connection()?;
+    let activo = activo_str == "true";
 
     let p_nuevo = ProductoNuevo {
         nombre: nombre.into(),
@@ -112,22 +111,21 @@ pub fn add_product(
         precio_venta: parse_num(&precio_venta, 0.0),
         stock: parse_num(&stock, 0),
         descripcion: (!descripcion.is_empty()).then(|| descripcion.into()),
-        peso: (!peso.is_empty()).then(|| peso.parse().ok()).flatten(),
-        tamano: (!tamano.is_empty()).then(|| tamano.into()),
-        unidad_medida: (!unidad_medida.is_empty()).then(|| unidad_medida.into()),
-        presentacion: (!presentacion.is_empty()).then(|| presentacion.into()),
         codigo: (!codigo.is_empty()).then(|| codigo.into()),
         activo,
-        fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
-        marca_id: (!marca_id.is_empty())
-            .then(|| marca_id.parse().ok())
-            .flatten(),
+        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
+        // Mapeo de Enums y Medidas
+        medida_p_id: parse_num(&medida_p_id, 1), // Default a 1 (Unidad)
+        cantidad_p: parse_num(&cantidad_p, 0.0),
+        medida_s_id: (!medida_s_id.is_empty()).then(|| medida_s_id.parse().ok()).flatten(),
+        cantidad_s: (!cantidad_s.is_empty()).then(|| cantidad_s.parse().ok()).flatten(),
+        empaque_id: parse_num(&empaque_id, 1),   // Default a 1 (Individual)
     };
 
     Ok(db::productos::crear_producto(&conn, &p_nuevo)?)
 }
 
-/// Actualiza los datos de un producto existente
+/// Actualiza un producto existente
 pub fn update_product(
     id: i64,
     nombre: SharedString,
@@ -135,37 +133,35 @@ pub fn update_product(
     precio_venta: SharedString,
     stock: SharedString,
     descripcion: SharedString,
-    peso: SharedString,
-    tamano: SharedString,
-    unidad_medida: SharedString,
-    presentacion: SharedString,
     codigo: SharedString,
     activo: bool,
-    fecha_vencimiento: SharedString,
     marca_id: SharedString,
+    // Nuevos campos de Enums y Medidas
+    medida_p_id: SharedString,
+    cantidad_p: SharedString,
+    medida_s_id: SharedString,
+    cantidad_s: SharedString,
+    empaque_id: SharedString,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let conn = db::open_connection()?;
 
-    let p_editado = DbProducto {
+    let _p_editado = DbProducto {
         id,
         nombre: nombre.into(),
         precio_neto: parse_num(&precio_neto, 0.0),
         precio_venta: parse_num(&precio_venta, 0.0),
         stock: parse_num(&stock, 0),
         descripcion: (!descripcion.is_empty()).then(|| descripcion.into()),
-        peso: (!peso.is_empty()).then(|| peso.parse().ok()).flatten(),
-        tamano: (!tamano.is_empty()).then(|| tamano.into()),
-        unidad_medida: (!unidad_medida.is_empty()).then(|| unidad_medida.into()),
-        presentacion: (!presentacion.is_empty()).then(|| presentacion.into()),
         codigo: (!codigo.is_empty()).then(|| codigo.into()),
         activo,
-        fecha_vencimiento: chrono::NaiveDate::parse_from_str(&fecha_vencimiento, "%Y-%m-%d").ok(),
-        marca_id: (!marca_id.is_empty())
-            .then(|| marca_id.parse().ok())
-            .flatten(),
+        marca_id: (!marca_id.is_empty()).then(|| marca_id.parse().ok()).flatten(),
+        medida_p_id: parse_num(&medida_p_id, 1),
+        cantidad_p: parse_num(&cantidad_p, 0.0),
+        medida_s_id: (!medida_s_id.is_empty()).then(|| medida_s_id.parse().ok()).flatten(),
+        cantidad_s: (!cantidad_s.is_empty()).then(|| cantidad_s.parse().ok()).flatten(),
+        empaque_id: parse_num(&empaque_id, 1),
     };
 
-    // Suponiendo que tienes esta función en db/productos.rs
-    // db::productos::actualizar_producto(&conn, &p_editado)
+    // Aquí llamarías a db::productos::actualizar_producto(&conn, &_p_editado)
     Ok(true)
 }

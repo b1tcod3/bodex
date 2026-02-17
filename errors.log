@@ -1,0 +1,481 @@
+   Compiling bodex v0.1.0 (/var/www/html/proyectos/bodex)
+warning: bodex@0.1.0: warning: padding only has effect on layout elements
+warning: bodex@0.1.0:   --> /var/www/html/proyectos/bodex/ui/views/producto/nuevo_producto.slint:41:67
+warning: bodex@0.1.0:    |
+warning: bodex@0.1.0: 41 |                 background: #1a1a2e; border-radius: 4px; padding: 10px;
+warning: bodex@0.1.0:    |                                                                   ^^^^^
+warning: bodex@0.1.0:    |
+warning: bodex@0.1.0: warning: padding only has effect on layout elements
+warning: bodex@0.1.0:   --> /var/www/html/proyectos/bodex/ui/views/producto/nuevo_producto.slint:58:67
+warning: bodex@0.1.0:    |
+warning: bodex@0.1.0: 58 |                 background: #1a1a2e; border-radius: 4px; padding: 10px;
+warning: bodex@0.1.0:    |                                                                   ^^^^^
+warning: bodex@0.1.0: warning: padding only has effect on layout elements
+warning: bodex@0.1.0:   --> /var/www/html/proyectos/bodex/ui/views/producto/nuevo_producto.slint:78:67
+warning: bodex@0.1.0:    |
+warning: bodex@0.1.0: 78 |                 background: #1a1a2e; border-radius: 4px; padding: 10px;
+warning: bodex@0.1.0:    |                                                                   ^^^^^
+warning: bodex@0.1.0: warning: padding only has effect on layout elements
+warning: bodex@0.1.0:   --> /var/www/html/proyectos/bodex/ui/views/producto/nuevo_producto.slint:96:67
+warning: bodex@0.1.0:    |
+warning: bodex@0.1.0: 96 |                 background: #1a1a2e; border-radius: 4px; padding: 10px;
+warning: bodex@0.1.0:    |                                                                   ^^^^^
+warning: unused import: `chrono::NaiveDateTime`
+ --> src/db/usuarios.rs:2:5
+  |
+2 | use chrono::NaiveDateTime;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `self`
+ --> src/inventory.rs:2:21
+  |
+2 | use crate::models::{self, Producto as DbProducto, ProductoNuevo};
+  |                     ^^^^
+
+warning: unused import: `chrono::NaiveDateTime`
+ --> src/models/producto.rs:1:5
+  |
+1 | use chrono::NaiveDateTime;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `medida::Medida`
+  --> src/models/mod.rs:11:9
+   |
+11 | pub use medida::Medida;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `tipo_empaque::TipoEmpaque`
+  --> src/models/mod.rs:14:9
+   |
+14 | pub use tipo_empaque::TipoEmpaque;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `DetalleVentaConProducto` and `VentaConDetalles`
+  --> src/models/mod.rs:16:31
+   |
+16 | pub use venta::{DetalleVenta, DetalleVentaConProducto, Venta, VentaConDetalles};
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^         ^^^^^^^^^^^^^^^^
+
+warning: unused imports: `ModelRc`, `StandardListViewItem`, and `VecModel`
+ --> src/ui_handlers.rs:4:30
+  |
+4 | use slint::{ComponentHandle, ModelRc, SharedString, StandardListViewItem, VecModel, Weak};
+  |                              ^^^^^^^                ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^
+
+warning: unused variable: `conn`
+   --> src/inventory.rs:146:9
+    |
+146 |     let conn = db::open_connection()?;
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_conn`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `usuario`
+  --> src/ui_handlers.rs:18:37
+   |
+18 | ...                   Ok(Some(usuario)) => {
+   |                               ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_usuario`
+
+warning: function `main` is never used
+  --> src/lib.rs:10:4
+   |
+10 | fn main() -> Result<(), Box<dyn std::error::Error>> {
+   |    ^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `open_connection` is never used
+  --> src/db/mod.rs:11:8
+   |
+11 | pub fn open_connection() -> Result<Connection> {
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `init_db` is never used
+  --> src/db/mod.rs:18:8
+   |
+18 | pub fn init_db(conn: &Connection) -> Result<()> {
+   |        ^^^^^^^
+
+warning: function `create_table` is never used
+ --> src/db/marcas.rs:5:8
+  |
+5 | pub fn create_table(conn: &Connection) -> Result<()> {
+  |        ^^^^^^^^^^^^
+
+warning: function `obtener_marcas` is never used
+  --> src/db/marcas.rs:20:8
+   |
+20 | pub fn obtener_marcas(conn: &Connection) -> Result<Vec<Marca>> {
+   |        ^^^^^^^^^^^^^^
+
+warning: function `crear_marca` is never used
+  --> src/db/marcas.rs:42:8
+   |
+42 | pub fn crear_marca(conn: &Connection, m: &MarcaNueva) -> Result<i64> {
+   |        ^^^^^^^^^^^
+
+warning: function `obtener_marca_por_id` is never used
+  --> src/db/marcas.rs:51:8
+   |
+51 | pub fn obtener_marca_por_id(conn: &Connection, id: i64) -> Result<Option<Marca>> {
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `actualizar_marca` is never used
+  --> src/db/marcas.rs:70:8
+   |
+70 | pub fn actualizar_marca(conn: &Connection, m: &Marca) -> Result<bool> {
+   |        ^^^^^^^^^^^^^^^^
+
+warning: function `eliminar_marca` is never used
+  --> src/db/marcas.rs:79:8
+   |
+79 | pub fn eliminar_marca(conn: &Connection, id: i64) -> Result<bool> {
+   |        ^^^^^^^^^^^^^^
+
+warning: function `create_table` is never used
+ --> src/db/productos.rs:5:8
+  |
+5 | pub fn create_table(conn: &Connection) -> Result<()> {
+  |        ^^^^^^^^^^^^
+
+warning: function `obtener_productos` is never used
+  --> src/db/productos.rs:31:8
+   |
+31 | pub fn obtener_productos(conn: &Connection) -> Result<Vec<Producto>> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: function `obtener_productos_con_marca` is never used
+  --> src/db/productos.rs:49:8
+   |
+49 | pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConMarca>> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `crear_producto` is never used
+  --> src/db/productos.rs:85:8
+   |
+85 | pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
+   |        ^^^^^^^^^^^^^^
+
+warning: function `eliminar_producto` is never used
+   --> src/db/productos.rs:112:8
+    |
+112 | pub fn eliminar_producto(conn: &Connection, id: i64) -> Result<bool> {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: function `mapear_producto` is never used
+   --> src/db/productos.rs:118:4
+    |
+118 | fn mapear_producto(row: &Row) -> Result<Producto> {
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `create_table` is never used
+ --> src/db/usuarios.rs:6:8
+  |
+6 | pub fn create_table(conn: &Connection) -> Result<()> {
+  |        ^^^^^^^^^^^^
+
+warning: function `seed_admin` is never used
+  --> src/db/usuarios.rs:22:8
+   |
+22 | pub fn seed_admin(conn: &Connection) -> Result<()> {
+   |        ^^^^^^^^^^
+
+warning: function `validar_usuario` is never used
+  --> src/db/usuarios.rs:37:8
+   |
+37 | pub fn validar_usuario(conn: &Connection, user: &str, pass: &str) -> Result<Option<Usuario>> {
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `crear_usuario` is never used
+  --> src/db/usuarios.rs:72:8
+   |
+72 | pub fn crear_usuario(
+   |        ^^^^^^^^^^^^^
+
+warning: function `eliminar_usuario` is never used
+  --> src/db/usuarios.rs:86:8
+   |
+86 | pub fn eliminar_usuario(conn: &Connection, id: i64) -> Result<bool> {
+   |        ^^^^^^^^^^^^^^^^
+
+warning: function `create_table` is never used
+ --> src/db/ventas.rs:5:8
+  |
+5 | pub fn create_table(conn: &Connection) -> Result<()> {
+  |        ^^^^^^^^^^^^
+
+warning: function `create_detalle_table` is never used
+  --> src/db/ventas.rs:21:8
+   |
+21 | pub fn create_detalle_table(conn: &Connection) -> Result<()> {
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `registrar_venta` is never used
+  --> src/db/ventas.rs:39:8
+   |
+39 | pub fn registrar_venta(
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `obtener_historial` is never used
+  --> src/db/ventas.rs:85:8
+   |
+85 | pub fn obtener_historial(conn: &Connection) -> Result<Vec<Venta>> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: struct `ProductInfo` is never constructed
+ --> src/inventory.rs:9:12
+  |
+9 | pub struct ProductInfo {
+  |            ^^^^^^^^^^^
+
+warning: static `LOADED_PRODUCTS` is never used
+  --> src/inventory.rs:17:8
+   |
+17 | static LOADED_PRODUCTS: OnceLock<Mutex<Vec<ProductInfo>>> = OnceLock::new();
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `get_cache` is never used
+  --> src/inventory.rs:20:4
+   |
+20 | fn get_cache() -> &'static Mutex<Vec<ProductInfo>> {
+   |    ^^^^^^^^^
+
+warning: function `parse_num` is never used
+  --> src/inventory.rs:25:4
+   |
+25 | fn parse_num<T: std::str::FromStr>(val: &SharedString, default: T) -> T {
+   |    ^^^^^^^^^
+
+warning: function `get_inventory_rows` is never used
+  --> src/inventory.rs:34:8
+   |
+34 | pub fn get_inventory_rows() -> Result<ModelRc<ModelRc<StandardListViewItem>>, Box<dyn std::error::Error>> {
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `get_product_by_index` is never used
+  --> src/inventory.rs:72:8
+   |
+72 | pub fn get_product_by_index(index: i32) -> Option<ProductInfo> {
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `delete_product_by_index` is never used
+  --> src/inventory.rs:78:8
+   |
+78 | pub fn delete_product_by_index(index: i32) -> Result<bool, Box<dyn std::error::Error>> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `add_product` is never used
+  --> src/inventory.rs:89:8
+   |
+89 | pub fn add_product(
+   |        ^^^^^^^^^^^
+
+warning: function `update_product` is never used
+   --> src/inventory.rs:129:8
+    |
+129 | pub fn update_product(
+    |        ^^^^^^^^^^^^^^
+
+warning: struct `Marca` is never constructed
+ --> src/models/marca.rs:2:12
+  |
+2 | pub struct Marca {
+  |            ^^^^^
+
+warning: struct `MarcaNueva` is never constructed
+  --> src/models/marca.rs:11:12
+   |
+11 | pub struct MarcaNueva {
+   |            ^^^^^^^^^^
+
+warning: enum `Medida` is never used
+ --> src/models/medida.rs:3:10
+  |
+3 | pub enum Medida {
+  |          ^^^^^^
+
+warning: associated items `from_i32`, `info`, and `todos_los_nombres` are never used
+  --> src/models/medida.rs:12:12
+   |
+11 | impl Medida {
+   | ----------- associated items in this implementation
+12 |     pub fn from_i32(id: i32) -> Self {
+   |            ^^^^^^^^
+...
+22 |     pub fn info(&self) -> (&'static str, &'static str) {
+   |            ^^^^
+...
+31 |     pub fn todos_los_nombres() -> Vec<String> {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `Producto` is never constructed
+ --> src/models/producto.rs:4:12
+  |
+4 | pub struct Producto {
+  |            ^^^^^^^^
+
+warning: struct `ProductoNuevo` is never constructed
+  --> src/models/producto.rs:23:12
+   |
+23 | pub struct ProductoNuevo {
+   |            ^^^^^^^^^^^^^
+
+warning: struct `ProductoConMarca` is never constructed
+  --> src/models/producto.rs:40:12
+   |
+40 | pub struct ProductoConMarca {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: enum `Rol` is never used
+ --> src/models/rol.rs:2:10
+  |
+2 | pub enum Rol {
+  |          ^^^
+
+warning: enum `TipoEmpaque` is never used
+ --> src/models/tipo_empaque.rs:3:10
+  |
+3 | pub enum TipoEmpaque {
+  |          ^^^^^^^^^^^
+
+warning: associated items `from_i32`, `info`, and `todos_tipos` are never used
+  --> src/models/tipo_empaque.rs:15:12
+   |
+14 | impl TipoEmpaque {
+   | ---------------- associated items in this implementation
+15 |     pub fn from_i32(id: i32) -> Self {
+   |            ^^^^^^^^
+...
+28 |     pub fn info(&self) -> (&'static str, &'static str) {
+   |            ^^^^
+...
+40 |     pub fn todos_tipos() -> Vec<Self> {
+   |            ^^^^^^^^^^^
+
+warning: struct `Usuario` is never constructed
+ --> src/models/usuario.rs:5:12
+  |
+5 | pub struct Usuario {
+  |            ^^^^^^^
+
+warning: struct `Venta` is never constructed
+ --> src/models/venta.rs:4:12
+  |
+4 | pub struct Venta {
+  |            ^^^^^
+
+warning: struct `DetalleVenta` is never constructed
+  --> src/models/venta.rs:13:12
+   |
+13 | pub struct DetalleVenta {
+   |            ^^^^^^^^^^^^
+
+warning: struct `DetalleVentaConProducto` is never constructed
+  --> src/models/venta.rs:23:12
+   |
+23 | pub struct DetalleVentaConProducto {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `VentaConDetalles` is never constructed
+  --> src/models/venta.rs:34:12
+   |
+34 | pub struct VentaConDetalles {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: function `setup_callbacks` is never used
+ --> src/ui_handlers.rs:6:8
+  |
+6 | pub fn setup_callbacks(ui: &AppWindow) {
+  |        ^^^^^^^^^^^^^^^
+
+warning: function `refresh_ui` is never used
+   --> src/ui_handlers.rs:104:4
+    |
+104 | fn refresh_ui(ui_handle: Weak<AppWindow>) {
+    |    ^^^^^^^^^^
+
+warning: function `load_initial_data` is never used
+   --> src/ui_handlers.rs:115:8
+    |
+115 | pub fn load_initial_data(_ui: &AppWindow) {}
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: `bodex` (lib) generated 60 warnings (run `cargo fix --lib -p bodex` to apply 9 suggestions)
+warning: function `obtener_marcas` is never used
+  --> src/db/marcas.rs:20:8
+   |
+20 | pub fn obtener_marcas(conn: &Connection) -> Result<Vec<Marca>> {
+   |        ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: multiple fields are never read
+  --> src/models/producto.rs:43:9
+   |
+40 | pub struct ProductoConMarca {
+   |            ---------------- fields in this struct
+...
+43 |     pub precio_neto: f64,
+   |         ^^^^^^^^^^^
+...
+46 |     pub descripcion: Option<String>,
+   |         ^^^^^^^^^^^
+47 |     pub codigo: Option<String>,
+   |         ^^^^^^
+48 |     pub activo: bool,
+   |         ^^^^^^
+49 |     pub marca_id: Option<i64>,
+   |         ^^^^^^^^
+...
+52 |     pub medida_p_id: i32,
+   |         ^^^^^^^^^^^
+53 |     pub cantidad_p: f64,
+   |         ^^^^^^^^^^
+54 |     pub empaque_id: i32,
+   |         ^^^^^^^^^^
+   |
+   = note: `ProductoConMarca` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `id`, `username`, `password_hash`, `rol`, `activo`, and `ultimo_login` are never read
+  --> src/models/usuario.rs:6:9
+   |
+ 5 | pub struct Usuario {
+   |            ------- fields in this struct
+ 6 |     pub id: i64,
+   |         ^^
+ 7 |     pub username: String,
+   |         ^^^^^^^^
+ 8 |     pub password_hash: String,
+   |         ^^^^^^^^^^^^^
+ 9 |     pub rol: Rol,
+   |         ^^^
+10 |     pub activo: bool,
+   |         ^^^^^^
+11 |     pub ultimo_login: Option<NaiveDateTime>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `Usuario` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: `bodex` (bin "bodex") generated 34 warnings (31 duplicates)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 29s
+     Running `target/debug/bodex`
+Base de datos inicializada correctamente.
+-----------------------------------------
+BODEX v1.0 - Gestión de Inventario
+Estado: Iniciado con Renderizador de Software
+-----------------------------------------
+Error watching for xdg color schemes: org.freedesktop.DBus.Error.UnknownMethod: No such method “ReadOne”
+Error: no such column: p.medida_p_id in SELECT p.id, p.nombre, p.precio_neto, p.precio_venta, p.stock, 
+                p.descripcion, p.codigo, p.activo, p.marca_id, m.nombre as marca_nombre,
+                p.medida_p_id, p.cantidad_p, p.empaque_id
+         FROM productos p
+         LEFT JOIN marcas m ON p.marca_id = m.id
+         ORDER BY p.nombre ASC at offset 169
+Error: no such column: p.medida_p_id in SELECT p.id, p.nombre, p.precio_neto, p.precio_venta, p.stock, 
+                p.descripcion, p.codigo, p.activo, p.marca_id, m.nombre as marca_nombre,
+                p.medida_p_id, p.cantidad_p, p.empaque_id
+         FROM productos p
+         LEFT JOIN marcas m ON p.marca_id = m.id
+         ORDER BY p.nombre ASC at offset 169
