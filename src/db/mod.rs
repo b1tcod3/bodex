@@ -26,6 +26,9 @@ pub fn init_db(conn: &Connection) -> Result<()> {
     // 2. Marcas (Independiente)
     marcas::create_table(conn)?;
 
+    // 2.1 Insertar marcas iniciales (Seeder)
+    marcas::seed_marcas(conn)?;
+
     // 3. Productos (Depende de Marcas)
     productos::create_table(conn)?;
 

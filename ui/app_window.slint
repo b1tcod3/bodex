@@ -33,6 +33,13 @@ export component AppWindow inherits Window {
     in-out property <string> edit-product-name;
     in-out property <string> edit-product-precio-venta;
     in-out property <string> edit-product-stock;
+    
+    // Estado de procesamiento para el spinner
+    in-out property <bool> procesando: false;
+    
+    // === PROPIEDADES DE VALIDACIÓN ===
+    in-out property <bool> sku-duplicado: false;        // Error de SKU duplicado (desde Rust)
+    in-out property <string> mensaje-error: "";         // Mensaje de error general
 
     // ==========================================
     // CALLBACKS (Puente con Rust)
@@ -41,11 +48,14 @@ export component AppWindow inherits Window {
     callback attempt-login(string, string);
     callback logout();
     
-    callback add-product(string, string, string, string, string, string, string, string, string, string, string, string, string);
+    callback add-product(string, string, string, string, string, string, string, string, string, string, string, string, string, string, string);
     callback delete-product(int);
     callback get-product-for-edit(int);
     callback refresh-inventory();
     callback close-app();
+    callback verificar-sku(string);  // Nuevo callback para verificar SKU duplicado
+    callback validate-numeric(string, bool, bool) -> string;  // Callback para validación numérica
+    callback changed(string);  // Callback para limpiar errores de SKU al escribir
 
     // ==========================================
     // ESTRUCTURA VISUAL PRINCIPAL
@@ -134,17 +144,32 @@ export component AppWindow inherits Window {
 
             // 3. FORMULARIO DE NUEVO PRODUCTO
             if (product-screen == "nuevo") : NuevoProducto {
+                procesando: root.procesando;
+                sku-duplicado: root.sku-duplicado;
+                mensaje-error: root.mensaje-error;
+                
                 volver => { 
+                    // Limpiar errores al volver
+                    root.sku-duplicado = false;
+                    root.mensaje-error = "";
                     root.product-screen = "lista"; 
                 }
                 
-                guardar_producto(nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id) => {
+                verificar_sku(sku) => {
+                    root.verificar-sku(sku);
+                }
+                
+                validate-numeric(text, allow-decimal, allow-negative) => {
+                    root.validate-numeric(text, allow-decimal, allow-negative)
+                }
+                
+                guardar_producto(nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id, cat_id, subcat_id) => {
                     root.add-product(
                         nombre, p_neto, p_venta, stock, 
                         desc, peso, tam, u_med, pres, cod, 
-                        venc, activo, m_id
+                        venc, activo, m_id, cat_id, subcat_id
                     );
-                    root.product-screen = "lista";
+                    // Nota: El cambio de pantalla se hace desde Rust después de completar
                 }
             }
         }

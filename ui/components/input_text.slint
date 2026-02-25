@@ -1,0 +1,80 @@
+import { LineEdit } from "std-widgets.slint";
+
+/// Componente de entrada de texto con etiqueta integrada (versión compacta)
+export component InputText inherits Rectangle {
+    in property <string> label;
+    in property <string> placeholder;
+    in property <bool> enabled: true;
+    in-out property <string> text <=> input.text;
+    in property <length> input-height: 22px;
+    in property <color> label-color: #888899;
+    in property <length> label-font-size: 9px;
+    
+    // === PROPIEDADES DE VALIDACIÓN ===
+    in property <bool> has-error: false;           // Estado de error forzado desde fuera
+    in property <string> error-message: "";        // Mensaje de error opcional
+    
+    // === ESTADO DE INTERACCIÓN (para validar solo después de que el usuario escriba) ===
+    in-out property <bool> touched: false;  // Se marca true cuando el usuario interactúa
+    
+    // Callback que se dispara cuando el usuario presiona Enter
+    callback enter-pressed(string);
+    
+    // Callback que se dispara cuando el texto cambia (para limpiar errores)
+    callback changed(string);
+    
+    property <length> label-height: 11px;
+    property <color> error-color: #ff4444;
+    property <color> normal-border: #2a2a4a;
+    property <color> error-border: #ff4444;
+    
+    // Error combinado: solo mostrar si el campo fue tocadotiene error
+    property <bool> mostrar-error: root.touched && root.has-error;
+    
+    VerticalLayout {
+        spacing: 1px;
+        
+        Text {
+            text: root.label;
+            color: root.mostrar-error ? root.error-color : root.label-color;
+            font-size: root.label-font-size;
+            font-weight: 600;
+            height: root.label-height;
+        }
+        
+        // Contenedor con borde para mostrar error
+        Rectangle {
+            height: root.input-height;
+            border-width: 1px;
+            border-radius: 3px;
+            border-color: root.mostrar-error ? root.error-border : root.normal-border;
+            background: root.enabled ? #1a1a2e : #12121f;
+            
+            input := LineEdit {
+                placeholder-text: root.placeholder;
+                enabled: root.enabled;
+                width: 100%;
+                height: 100%;
+                
+                // Marcar como "tocado" cuando el usuario escribe
+                edited => {
+                    root.touched = true;
+                    root.changed(self.text);
+                }
+                
+                // Llamar callback cuando el usuario presiona Enter
+                accepted => {
+                    root.enter-pressed(self.text);
+                }
+            }
+        }
+        
+        // Mensaje de error (visible solo si hay error, mensaje, y el campo fue tocado)
+        if (root.mostrar-error && root.error-message != "") : Text {
+            text: root.error-message;
+            color: root.error-color;
+            font-size: 8px;
+            height: 10px;
+        }
+    }
+}

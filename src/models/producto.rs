@@ -17,6 +17,9 @@ pub struct Producto {
     pub medida_s_id: Option<i32>, // ID del Enum Medida (Secundaria/Opcional)
     pub cantidad_s: Option<f64>,
     pub empaque_id: i32, // ID del Enum TipoEmpaque
+    // Categoría y subcategoría
+    pub categoria_id: i32,
+    pub subcategoria_id: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -34,6 +37,9 @@ pub struct ProductoNuevo {
     pub medida_s_id: Option<i32>,
     pub cantidad_s: Option<f64>,
     pub empaque_id: i32,
+    // Categoría y subcategoría
+    pub categoria_id: i32,
+    pub subcategoria_id: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -52,4 +58,7 @@ pub struct ProductoConMarca {
     pub medida_p_id: i32,
     pub cantidad_p: f64,
     pub empaque_id: i32,
+    // Categoría y subcategoría
+    pub categoria_id: i32,
+    pub subcategoria_id: i32,
 }

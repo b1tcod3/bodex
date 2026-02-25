@@ -80,3 +80,19 @@ pub fn eliminar_marca(conn: &Connection, id: i64) -> Result<bool> {
     let filas = conn.execute("DELETE FROM marcas WHERE id = ?1", params![id])?;
     Ok(filas > 0)
 }
+
+/// Inserta marcas iniciales si no existen (Seeder)
+pub fn seed_marcas(conn: &Connection) -> Result<()> {
+    // Verificar si ya existen marcas
+    let count: i64 = conn.query_row("SELECT COUNT(*) FROM marcas", [], |row| row.get(0))?;
+    
+    if count == 0 {
+        // Insertar marca genérica por defecto
+        conn.execute(
+            "INSERT INTO marcas (nombre, descripcion) VALUES ('Genérico', 'Marca por defecto para productos sin marca específica')",
+            [],
+        )?;
+        println!("Marca 'Genérico' insertada correctamente.");
+    }
+    Ok(())
+}

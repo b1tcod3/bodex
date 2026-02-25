@@ -20,6 +20,9 @@ pub fn create_table(conn: &Connection) -> Result<()> {
             medida_s_id INTEGER,
             cantidad_s REAL,
             empaque_id INTEGER NOT NULL,
+            -- Categoría y subcategoría
+            categoria_id INTEGER NOT NULL DEFAULT 1,
+            subcategoria_id INTEGER NOT NULL DEFAULT 1,
             FOREIGN KEY (marca_id) REFERENCES marcas(id) ON DELETE SET NULL
         )",
         [],
@@ -32,7 +35,7 @@ pub fn obtener_productos(conn: &Connection) -> Result<Vec<Producto>> {
     let mut stmt = conn.prepare(
         "SELECT id, nombre, precio_neto, precio_venta, stock, descripcion,
                 codigo, activo, marca_id, medida_p_id, cantidad_p, 
-                medida_s_id, cantidad_s, empaque_id
+                medida_s_id, cantidad_s, empaque_id, categoria_id, subcategoria_id
          FROM productos ORDER BY nombre ASC",
     )?;
 
@@ -50,7 +53,7 @@ pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConM
     let mut stmt = conn.prepare(
         "SELECT p.id, p.nombre, p.precio_neto, p.precio_venta, p.stock, 
                 p.descripcion, p.codigo, p.activo, p.marca_id, m.nombre as marca_nombre,
-                p.medida_p_id, p.cantidad_p, p.empaque_id
+                p.medida_p_id, p.cantidad_p, p.empaque_id, p.categoria_id, p.subcategoria_id
          FROM productos p
          LEFT JOIN marcas m ON p.marca_id = m.id
          ORDER BY p.nombre ASC",
@@ -71,6 +74,8 @@ pub fn obtener_productos_con_marca(conn: &Connection) -> Result<Vec<ProductoConM
             medida_p_id: row.get(10)?,
             cantidad_p: row.get(11)?,
             empaque_id: row.get(12)?,
+            categoria_id: row.get(13)?,
+            subcategoria_id: row.get(14)?,
         })
     })?;
 
@@ -87,8 +92,8 @@ pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
         "INSERT INTO productos (
             nombre, precio_neto, precio_venta, stock, descripcion, 
             codigo, activo, marca_id, medida_p_id, cantidad_p, 
-            medida_s_id, cantidad_s, empaque_id
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            medida_s_id, cantidad_s, empaque_id, categoria_id, subcategoria_id
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
         params![
             p.nombre,
             p.precio_neto,
@@ -102,7 +107,9 @@ pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
             p.cantidad_p,
             p.medida_s_id,
             p.cantidad_s,
-            p.empaque_id
+            p.empaque_id,
+            p.categoria_id,
+            p.subcategoria_id
         ],
     )?;
     Ok(conn.last_insert_rowid())
@@ -112,6 +119,22 @@ pub fn crear_producto(conn: &Connection, p: &ProductoNuevo) -> Result<i64> {
 pub fn eliminar_producto(conn: &Connection, id: i64) -> Result<bool> {
     let filas = conn.execute("DELETE FROM productos WHERE id = ?1", params![id])?;
     Ok(filas > 0)
+}
+
+/// Verificar si existe un producto con el código/SKU dado
+/// Retorna true si el SKU ya existe en la base de datos
+pub fn existe_sku(conn: &Connection, codigo: &str) -> Result<bool> {
+    // Ignorar códigos vacíos
+    if codigo.trim().is_empty() {
+        return Ok(false);
+    }
+    
+    let mut stmt = conn.prepare(
+        "SELECT COUNT(*) FROM productos WHERE codigo = ?1"
+    )?;
+    
+    let count: i32 = stmt.query_row(params![codigo.trim()], |row| row.get(0))?;
+    Ok(count > 0)
 }
 
 /// Mapeo limpio de filas SQL a la estructura Producto
@@ -131,5 +154,7 @@ fn mapear_producto(row: &Row) -> Result<Producto> {
         medida_s_id: row.get(11)?,
         cantidad_s: row.get(12)?,
         empaque_id: row.get(13)?,
+        categoria_id: row.get(14)?,
+        subcategoria_id: row.get(15)?,
     })
 }

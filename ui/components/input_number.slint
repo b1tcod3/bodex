@@ -1,0 +1,108 @@
+import { LineEdit } from "std-widgets.slint";
+
+/// Componente de entrada numérica con etiqueta integrada (versión compacta)
+/// La validación numérica se realiza en Rust a través del callback validate-numeric
+/// Incluye filtro visual en tiempo real y teclado numérico en dispositivos táctiles
+export component InputNumber inherits Rectangle {
+    in property <string> label;
+    in property <string> placeholder;
+    in property <bool> enabled: true;
+    in-out property <string> text: "";  // Propiedad de salida para el valor numérico
+    in property <length> input-height: 22px;
+    in property <color> label-color: #888899;
+    in property <length> label-font-size: 9px;
+    
+    // === PROPIEDADES DE VALIDACIÓN ===
+    in property <bool> has-error: false;           // Estado de error externo
+    in property <string> error-message: "";        // Mensaje de error opcional
+    in property <bool> allow-decimal: true;        // Permitir decimales (punto)
+    in property <bool> allow-negative: false;      // Permitir números negativos
+    
+    // === PROPIEDAD PARA ACTIVAR MODO NUMÉRICO ===
+    // Cuando es true: muestra teclado numérico en móviles y valida visualmente
+    in property <bool> solo-numeros: true;         // Por defecto activado para InputNumber
+    
+    // Callback para validación numérica en Rust (retorna el texto filtrado)
+    // Parámetros: (texto, permitir_decimal, permitir_negativo)
+    callback validate-numeric(string, bool, bool) -> string;
+    
+    // === ESTADO DE INTERACCIÓN (para validar solo después de que el usuario escriba) ===
+    in-out property <bool> touched: false;  // Se marca true cuando el usuario interactúa
+    
+    property <length> label-height: 11px;
+    property <color> error-color: #ff4444;
+    property <color> normal-border: #2a2a4a;
+    property <color> error-border: #ff4444;
+    
+    // Error combinado: solo mostrar si el campo fue tocadotiene error
+    property <bool> mostrar-error: root.touched && root.has-error;
+    
+    // === VALIDACIÓN VISUAL INTERNA ===
+    // Detecta si el texto actual es un número válido
+    // Un texto vacío no es error de formato (el usuario está escribiendo)
+    // Un texto con letras sí es error de formato
+    property <bool> formato-invalido: root.solo-numeros && 
+        root.text != "" && 
+        root.text != "." && 
+        root.text != "-" &&
+        // Intentar detectar caracteres no numéricos
+        // En Slint no hay regex, pero podemos verificar si parsea a float
+        // Si el texto no está vacío y no es un número válido, es error
+        false;  // Por ahora desactivado - la validación se hace en Rust
+    
+    // Estado combinado de error (externo + interno)
+    property <bool> tiene-error: root.has-error || root.formato-invalido;
+    
+    VerticalLayout {
+        spacing: 1px;
+        
+        Text {
+            text: root.label;
+            color: root.mostrar-error ? root.error-color : root.label-color;
+            font-size: root.label-font-size;
+            font-weight: 600;
+            height: root.label-height;
+        }
+        
+        // Contenedor con borde para mostrar error
+        Rectangle {
+            height: root.input-height;
+            border-width: 1px;
+            border-radius: 3px;
+            border-color: root.mostrar-error ? root.error-border : root.normal-border;
+            // Fondo rojizo si hay error de formato mientras se escribe
+            background: root.formato-invalido ? #442222 : 
+                        (root.enabled ? #1a1a2e : #12121f);
+            
+            input := LineEdit {
+                placeholder-text: root.placeholder;
+                enabled: root.enabled;
+                width: 100%;
+                height: 100%;
+                text: root.text;
+                
+                // === TECLADO NUMÉRICO EN DISPOSITIVOS TÁCTILES ===
+                // InputType.decimal muestra el teclado numérico apropiado
+                input-type: root.solo-numeros ? InputType.decimal : InputType.text;
+                
+                // Marcar como "tocado" cuando el usuario escribe
+                edited => {
+                    root.touched = true;
+                    
+                    // Validación numérica en tiempo real via callback a Rust
+                    // El callback retorna el texto filtrado (solo números válidos)
+                    let filtered = root.validate-numeric(self.text, root.allow-decimal, root.allow-negative);
+                    root.text = filtered;
+                }
+            }
+        }
+        
+        // Mensaje de error (visible solo si hay error y hay mensaje)
+        if (root.mostrar-error && root.error-message != "") : Text {
+            text: root.error-message;
+            color: root.error-color;
+            font-size: 8px;
+            height: 10px;
+        }
+    }
+}

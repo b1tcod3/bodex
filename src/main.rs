@@ -7,7 +7,9 @@ mod ui_handlers;
 // 2. Importaciones de Slint y estándares
 slint::include_modules!();
 
-fn main() {
+// 3. Cambiamos main a una función asíncrona de Tokio
+#[tokio::main]
+async fn main() {
     // --- CONFIGURACIÓN DEL RENDERIZADOR ---
     // Forzamos el backend de software antes de que Slint se inicialice.
     // Esto evita errores de GPU en entornos como WSL, VMs o drivers antiguos.
@@ -56,7 +58,23 @@ fn main() {
         // 6. Carga de estado inicial (Cargar productos en la tabla, etc.)
         ui_handlers::load_initial_data(&ui);
 
-        // 7. Ejecución del bucle principal
+        // 7. Ejemplo de carga de datos en un hilo secundario con Tokio
+        let ui_handle = ui.as_weak();
+        tokio::spawn(async move {
+            // Simulamos una carga pesada o consulta a DB
+            println!("Hilo secundario: Cargando datos...");
+            
+            // Aquí llamarías a tu lógica de base de datos
+            // let resultados = inventory::get_inventory_rows();
+
+            // Para actualizar la UI, debemos "regresar" al hilo principal
+            ui_handle.upgrade_in_event_loop(|ui| {
+                // ui_handlers::load_initial_data(&ui);
+                println!("UI actualizada desde Tokio");
+            }).unwrap();
+        });
+
+        // 8. Ejecución del bucle principal
         println!("-----------------------------------------");
         println!("BODEX v1.0 - Gestión de Inventario");
         println!("Estado: Iniciado con Renderizador de Software");

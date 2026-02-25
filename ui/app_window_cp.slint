@@ -1,4 +1,5 @@
 import { Button, VerticalBox, HorizontalBox, StandardTableView, LineEdit, CheckBox, Switch } from "std-widgets.slint";
+import { TableRow } from "components/table_row.slint";
 
 export component AppWindow inherits Window {
     title: "BODEX - Sistema de Gestión";
@@ -193,17 +194,31 @@ export component AppWindow inherits Window {
                     
                     VerticalBox {
                         padding: 15px;
-                        StandardTableView {
-                            columns: [
-                                {title: "Código"}, 
-                                {title: "Producto"}, 
-                                {title: "Precio Venta"}, 
-                                {title: "Stock"},
-                                {title: "Marca"},
-                                {title: "Estado"}
-                            ];
-                            rows: root.inventory_rows;
-                            current-row <=> root.selected_row;
+                        // Tabla optimizada con componente de fila simple
+                        Rectangle {
+                            background: transparent;
+                            height: 400px;
+                            
+                            // Usamos un Flickable para scroll suave
+                            Flickable {
+                                width: parent.width;
+                                height: parent.height;
+                                
+                                // Contenedor de filas
+                                VerticalLayout {
+                                    spacing: 0;
+                                    width: parent.width;
+                                    
+                                    // Renderizamos filas manualmente para mayor control
+                                    for row_data in root.inventory_rows : TableRow {
+                                        width: parent.width;
+                                        height: 40px;
+                                        row-data: row_data;
+                                        selected <=> root.selected_row == index;
+                                        clicked => { root.selected_row = index; }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

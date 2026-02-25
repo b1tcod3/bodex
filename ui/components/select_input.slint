@@ -1,0 +1,33 @@
+import { ComboBox } from "std-widgets.slint";
+
+/// Componente de selección con etiqueta integrada (versión compacta)
+export component SelectInput inherits Rectangle {
+    in property <string> label;
+    in property <[string]> model: [];
+    in property <int> current-index: 0;
+    in property <bool> enabled: true;
+    in property <length> input-height: 22px;
+    in property <color> label-color: #888899;
+    in property <length> label-font-size: 9px;
+    
+    property <length> label-height: 11px;
+    
+    VerticalLayout {
+        spacing: 1px;
+        
+        Text {
+            text: root.label;
+            color: root.label-color;
+            font-size: root.label-font-size;
+            font-weight: 600;
+            height: root.label-height;
+        }
+        
+        select := ComboBox {
+            model: root.model;
+            current-index: root.current-index;
+            height: root.input-height;
+            enabled: root.enabled;
+        }
+    }
+}
