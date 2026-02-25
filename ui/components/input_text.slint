@@ -6,9 +6,9 @@ export component InputText inherits Rectangle {
     in property <string> placeholder;
     in property <bool> enabled: true;
     in-out property <string> text <=> input.text;
-    in property <length> input-height: 22px;
-    in property <color> label-color: #888899;
-    in property <length> label-font-size: 9px;
+    in property <length> input-height: 36px;
+    in property <color> label-color: #d3d8e5;
+    in property <length> label-font-size: 12px;
     
     // === PROPIEDADES DE VALIDACIÓN ===
     in property <bool> has-error: false;           // Estado de error forzado desde fuera
@@ -23,10 +23,11 @@ export component InputText inherits Rectangle {
     // Callback que se dispara cuando el texto cambia (para limpiar errores)
     callback changed(string);
     
-    property <length> label-height: 11px;
+    property <length> label-height: 16px;
     property <color> error-color: #ff4444;
-    property <color> normal-border: #2a2a4a;
+    property <color> normal-border: #5b6480;
     property <color> error-border: #ff4444;
+    property <color> focus-border: #00d4ff;
     
     // Error combinado: solo mostrar si el campo fue tocadotiene error
     property <bool> mostrar-error: root.touched && root.has-error;
@@ -45,11 +46,11 @@ export component InputText inherits Rectangle {
         // Contenedor con borde para mostrar error
         Rectangle {
             height: root.input-height;
-            border-width: 1px;
-            border-radius: 3px;
-            border-color: root.mostrar-error ? root.error-border : root.normal-border;
-            background: root.enabled ? #1a1a2e : #12121f;
-            
+            border-width: root.mostrar-error || input.has-focus ? 2px : 1px;
+            border-radius: 4px;
+            border-color: root.mostrar-error ? root.error-border : (input.has-focus ? root.focus-border : root.normal-border);
+            background: root.enabled ? #171b29 : #10131c;
+             
             input := LineEdit {
                 placeholder-text: root.placeholder;
                 enabled: root.enabled;
@@ -73,8 +74,8 @@ export component InputText inherits Rectangle {
         if (root.mostrar-error && root.error-message != "") : Text {
             text: root.error-message;
             color: root.error-color;
-            font-size: 8px;
-            height: 10px;
+            font-size: 11px;
+            height: 14px;
         }
     }
 }

@@ -8,32 +8,45 @@ export component ListaProductos inherits Rectangle {
     callback ir_a_nuevo(); // Nuevo callback para navegación
 
     background: transparent;
+    horizontal-stretch: 1;
+    vertical-stretch: 1;
 
     VerticalBox {
         spacing: 20px;
         padding: 0px;
+        horizontal-stretch: 1;
+        vertical-stretch: 1;
 
         HorizontalBox {
             alignment: space-between;
+            min-height: 44px;
             Text {
                 text: "📋 INVENTARIO";
-                font-size: 24px;
+                font-size: 28px;
                 color: #00ffff;
                 font-weight: 800;
             }
-            
+             
             HorizontalBox {
                 spacing: 10px;
                 Button {
                     text: "➕ Nuevo Producto";
                     primary: true;
+                    height: 38px;
                     clicked => { root.ir_a_nuevo(); }
                 }
                 Button {
                     text: "🔄";
+                    height: 38px;
                     clicked => { root.refrescar(); }
                 }
             }
+        }
+
+        Text {
+            text: "Código | Nombre | Precio | Stock | Marca | Estado";
+            color: #9aa0b4;
+            font-size: 13px;
         }
 
         Rectangle {
@@ -42,12 +55,20 @@ export component ListaProductos inherits Rectangle {
             border-width: 1px;
             border-color: #ff00ff;
             clip: true;
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+            min-height: 420px;
 
             StandardTableView {
+                width: parent.width;
+                height: parent.height;
                 columns: [
+                    { title: "Código" },
                     { title: "Producto" },
                     { title: "Precio" },
-                    { title: "Stock" }
+                    { title: "Stock" },
+                    { title: "Marca" },
+                    { title: "Estado" }
                 ];
                 rows: root.rows;
             }

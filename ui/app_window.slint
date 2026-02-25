@@ -48,7 +48,7 @@ export component AppWindow inherits Window {
     callback attempt-login(string, string);
     callback logout();
     
-    callback add-product(string, string, string, string, string, string, string, string, string, string, string, string, string, string, string);
+    callback add-product(string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string);
     callback delete-product(int);
     callback get-product-for-edit(int);
     callback refresh-inventory();
@@ -162,12 +162,16 @@ export component AppWindow inherits Window {
                 validate-numeric(text, allow-decimal, allow-negative) => {
                     root.validate-numeric(text, allow-decimal, allow-negative)
                 }
+
+                changed(texto) => {
+                    root.changed(texto);
+                }
                 
-                guardar_producto(nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id, cat_id, subcat_id) => {
+                guardar_producto(nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id, cat_id, subcat_id, empaque_id) => {
                     root.add-product(
                         nombre, p_neto, p_venta, stock, 
                         desc, peso, tam, u_med, pres, cod, 
-                        venc, activo, m_id, cat_id, subcat_id
+                        venc, activo, m_id, cat_id, subcat_id, empaque_id
                     );
                     // Nota: El cambio de pantalla se hace desde Rust después de completar
                 }

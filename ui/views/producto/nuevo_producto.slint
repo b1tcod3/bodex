@@ -44,68 +44,106 @@ out property <bool> formulario-valido:
     p_neto_in.text != "" && 
     p_venta_in.text != "" && 
     stock_in.text != "" &&
-    !root.sku-error-local;
+    root.sku-error-local &&
+    !root.sku-duplicado;
 
 // === ESTADO LOCAL DE SKU ===
 // Variable local para controlar el estado de error de SKU
 out property <bool> sku-error-local: false;
 
-// Callback actualizado (15 parámetros: 13 originales + categoria_id + subcategoria_id)
-callback guardar_producto(string, string, string, string, string, string, string, string, string, string, string, string, string, string, string);
+// Callback actualizado (16 parámetros: + categoria_id + subcategoria_id + empaque_id)
+callback guardar_producto(string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string);
 callback verificar_sku(string);  // Nuevo callback para verificar SKU duplicado
 callback validate-numeric(string, bool, bool) -> string;  // Callback para validación numérica
 callback changed(string);  // Callback para limpiar errores al escribir
 callback volver();
 
-background: #0f0f1a;
+    background: #0b1018;
 
     VerticalBox {
-        padding: 8px;
-        spacing: 6px;
+        padding: 14px;
+        spacing: 10px;
+        horizontal-stretch: 1;
+        vertical-stretch: 1;
 
         // --- CABECERA COMPACTA ---
         HorizontalBox {
             alignment: space-between;
             Text {
                 text: "REGISTRO TÉCNICO";
-                font-size: 14px;
+                font-size: 20px;
                 color: #00ffff;
                 font-weight: 800;
             }
             Button {
-                text: "✕"; 
-                width: 24px;
+                text: "Cerrar formulario";
+                height: 38px;
                 clicked => { root.volver(); }
             }
         }
 
-        // --- CUERPO EN GRID 2x2 ---
-        GridLayout {
-            spacing: 6px;
+        form_scroll := ScrollView {
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+            width: 100%;
+            viewport-width: self.visible-width;
+            viewport-height: max(self.visible-height, form_content.preferred-height);
 
-            // [0,0] IDENTIFICACIÓN
-            Rectangle {
-                col: 0; row: 0;
-                background: #1a1a2e; border-radius: 4px;
+            form_content := VerticalBox {
+                width: form_scroll.visible-width;
+                spacing: 10px;
+
+                Rectangle {
+                    background: #121a27;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #3a4b67;
+                    min-height: 58px;
+                    VerticalBox {
+                        padding: 8px;
+                        spacing: 2px;
+                        Text {
+                            text: "Campos obligatorios: Nombre, Código/SKU, Costo neto, Precio de venta y Stock.";
+                            color: #e5ebff;
+                            font-size: 12px;
+                        }
+                        Text {
+                            text: "Navegación de escritorio: use Tab/Shift+Tab para recorrer campos y Enter en SKU para validar.";
+                            color: #b8c2df;
+                            font-size: 11px;
+                        }
+                    }
+                }
+
+                // --- CUERPO EN GRID 2x2 ---
+                GridLayout {
+                    spacing: 10px;
+
+                    // [0,0] IDENTIFICACIÓN
+                    Rectangle {
+                        col: 0; row: 0;
+                        background: #131b2a; border-radius: 6px;
+                border-width: 1px;
+                border-color: #33435f;
                 VerticalBox {
-                    padding: 6px;
-                    spacing: 4px;
-                    Text { text: "1. IDENTIDAD"; color: #ff00ff; font-size: 9px; font-weight: 700; }
+                    padding: 10px;
+                    spacing: 6px;
+                    Text { text: "1. IDENTIDAD"; color: #ff79df; font-size: 12px; font-weight: 700; }
                     name_in := InputText { 
-                        label: "NOMBRE"; 
+                        label: "NOMBRE *"; 
                         placeholder: "Nombre del producto"; 
                         enabled: !root.procesando;
                         has-error: root.error-nombre && name_in.text == "";
-                        error-message: "El nombre es requerido";
+                        error-message: "Error: El nombre es requerido";
                     }
 sku_in := InputText { 
-    label: "CÓDIGO / SKU"; 
+    label: "CÓDIGO / SKU *"; 
     placeholder: "Ej: ABC-123"; 
     enabled: !root.procesando;
     
     // CAMBIO: Usa 'sku-duplicado' para el estado de error
     has-error: root.sku-duplicado;
-    error-message: root.sku-duplicado ? "Este código ya existe" : "";
+    error-message: root.sku-duplicado ? "Error: Este código ya existe" : "";
     
     // Cuando el usuario presiona Enter, verificar SKU
     enter-pressed(sku_text) => {
@@ -122,6 +160,11 @@ sku_in := InputText {
         root.changed(nuevo_texto);
     }
 }
+                    Text {
+                        text: "Nota: el SKU debe ser único. Formato sugerido: ABC-123.";
+                        color: #c2cbe2;
+                        font-size: 11px;
+                    }
                     marca_sel := SelectInput { 
                         label: "MARCA";
                         model: root.lista_marcas;
@@ -129,16 +172,18 @@ sku_in := InputText {
                         enabled: !root.procesando;
                     }
                 }
-            }
+                    }
 
-            // [0,1] CATEGORIZACIÓN Y MEDIDAS
-            Rectangle {
-                col: 1; row: 0;
-                background: #1a1a2e; border-radius: 4px;
+                    // [0,1] CATEGORIZACIÓN Y MEDIDAS
+                    Rectangle {
+                        col: 1; row: 0;
+                        background: #131b2a; border-radius: 6px;
+                border-width: 1px;
+                border-color: #33435f;
                 VerticalBox {
-                    padding: 6px;
-                    spacing: 4px;
-                    Text { text: "2. CATEGORIZACIÓN Y MEDIDAS"; color: #ff00ff; font-size: 9px; font-weight: 700; }
+                    padding: 10px;
+                    spacing: 6px;
+                    Text { text: "2. CATEGORIZACIÓN Y MEDIDAS"; color: #ff79df; font-size: 12px; font-weight: 700; }
                     HorizontalBox {
                         spacing: 6px;
                         cat_sel := SelectInput { 
@@ -189,34 +234,36 @@ sku_in := InputText {
                         }
                     }
                 }
-            }
+                    }
 
-            // [1,0] FINANZAS Y STOCK
-            Rectangle {
-                col: 0; row: 1;
-                background: #1a1a2e; border-radius: 4px;
+                    // [1,0] FINANZAS Y STOCK
+                    Rectangle {
+                        col: 0; row: 1;
+                        background: #131b2a; border-radius: 6px;
+                border-width: 1px;
+                border-color: #33435f;
                 VerticalBox {
-                    padding: 6px;
-                    spacing: 4px;
-                    Text { text: "3. FINANZAS Y STOCK"; color: #ff00ff; font-size: 9px; font-weight: 700; }
+                    padding: 10px;
+                    spacing: 6px;
+                    Text { text: "3. FINANZAS Y STOCK"; color: #ff79df; font-size: 12px; font-weight: 700; }
                     HorizontalBox {
                         spacing: 6px;
                         p_neto_in := InputNumber { 
-                            label: "COSTO NETO"; 
+                            label: "COSTO NETO *"; 
                             placeholder: "0.00";
                             enabled: !root.procesando;
                             has-error: root.error-costo;
-                            error-message: "Ingrese un costo válido";
+                            error-message: "Error: Ingrese un costo válido";
                             validate-numeric(text, allow-decimal, allow-negative) => {
                                 root.validate-numeric(text, allow-decimal, allow-negative)
                             }
                         }
                         p_venta_in := InputNumber { 
-                            label: "PRECIO VENTA"; 
+                            label: "PRECIO VENTA *"; 
                             placeholder: "0.00";
                             enabled: !root.procesando;
                             has-error: root.error-precio;
-                            error-message: "Ingrese un precio válido";
+                            error-message: "Error: Ingrese un precio válido";
                             validate-numeric(text, allow-decimal, allow-negative) => {
                                 root.validate-numeric(text, allow-decimal, allow-negative)
                             }
@@ -226,11 +273,11 @@ sku_in := InputText {
                     HorizontalBox {
                         spacing: 6px;
                         stock_in := InputNumber { 
-                            label: "STOCK"; 
+                            label: "STOCK *"; 
                             placeholder: "0";
                             enabled: !root.procesando;
                             has-error: root.error-stock;
-                            error-message: "El stock es requerido";
+                            error-message: "Error: El stock es requerido";
                             validate-numeric(text, allow-decimal, allow-negative) => {
                                 root.validate-numeric(text, allow-decimal, allow-negative)
                             }
@@ -243,39 +290,60 @@ sku_in := InputText {
                         }
                     }
                 }
-            }
+                    }
 
-            // [1,1] DETALLES Y ESTADO
-            Rectangle {
-                col: 1; row: 1;
-                background: #1a1a2e; border-radius: 4px;
+                    // [1,1] DETALLES Y ESTADO
+                    Rectangle {
+                        col: 1; row: 1;
+                        background: #131b2a; border-radius: 6px;
+                border-width: 1px;
+                border-color: #33435f;
                 VerticalBox {
-                    padding: 6px;
-                    spacing: 4px;
-                    Text { text: "4. DESCRIPCIÓN"; color: #ff00ff; font-size: 9px; font-weight: 700; }
-                    desc_in := TextEdit { 
-                        placeholder-text: "Descripción del producto..."; 
-                        font-size: 10px; 
+                    padding: 10px;
+                    spacing: 6px;
+                    Text { text: "4. DESCRIPCIÓN"; color: #ff79df; font-size: 12px; font-weight: 700; }
+                    Rectangle {
+                        border-width: desc_in.has-focus ? 2px : 1px;
+                        border-color: desc_in.has-focus ? #00d4ff : #5b6480;
+                        border-radius: 4px;
+                        background: #171b29;
                         vertical-stretch: 1;
-                        enabled: !root.procesando;
+                        min-height: 96px;
+                        desc_in := TextEdit { 
+                            placeholder-text: "Descripción del producto..."; 
+                            font-size: 13px; 
+                            vertical-stretch: 1;
+                            enabled: !root.procesando;
+                            width: parent.width;
+                            height: parent.height;
+                        }
                     }
                     HorizontalBox {
                         spacing: 6px;
-                        Text { text: "Activo"; color: #ffffff; font-size: 10px; vertical-alignment: center; }
+                        Text { text: "Estado del producto"; color: #ffffff; font-size: 12px; vertical-alignment: center; }
                         activo_check := CheckBox { text: ""; checked: true; enabled: !root.procesando; }
+                        Text {
+                            text: activo_check.checked ? "Activo" : "Inactivo";
+                            color: #ffffff;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
                         activo_switch := TouchArea {
-                            width: 36px; height: 18px;
+                            width: 52px; height: 28px;
                             
                             Rectangle {
-                                width: 36px; height: 18px;
-                                background: activo_check.checked ? #00ff00 : #333;
-                                border-radius: 9px;
+                                width: 52px; height: 28px;
+                                background: activo_check.checked ? #1f9d55 : #4b5568;
+                                border-radius: 14px;
+                                border-width: 1px;
+                                border-color: #d3d8e5;
                                 
                                 Rectangle {
-                                    x: activo_check.checked ? 20px : 2px;
-                                    y: 2px; width: 14px; height: 14px;
+                                    x: activo_check.checked ? 28px : 2px;
+                                    y: 2px; width: 24px; height: 24px;
                                     background: #fff;
-                                    border-radius: 7px;
+                                    border-radius: 12px;
                                     animate x { duration: 150ms; }
                                 }
                             }
@@ -288,39 +356,51 @@ sku_in := InputText {
                         }
                     }
                 }
+                    }
+                }
             }
         }
 
         // --- MENSAJE DE ERROR GENERAL ---
         if (root.mensaje-error != "") : Rectangle {
-            background: #331111;
-            border-radius: 4px;
-            height: 24px;
-            
+            background: #3a1116;
+            border-radius: 6px;
+            border-width: 1px;
+            border-color: #ff6b6b;
+            height: 44px;
+             
             HorizontalBox {
-                padding: 6px;
+                padding: 8px;
                 spacing: 6px;
                 
                 Text {
-                    text: "⚠";
+                    text: "ERROR";
                     color: #ff4444;
                     font-size: 12px;
+                    font-weight: 700;
                 }
                 Text {
                     text: root.mensaje-error;
-                    color: #ff4444;
-                    font-size: 10px;
+                    color: #ffd3d3;
+                    font-size: 12px;
                     vertical-alignment: center;
                 }
             }
         }
+
+Text {
+    text: root.formulario-valido ? "Formulario listo para guardar." :
+          "Complete los campos obligatorios marcados con * para habilitar el botón Guardar.";
+    color: root.formulario-valido ? #9ef7c3 : #d8e1ff;
+    font-size: 12px;
+}
 
 // --- BOTÓN ACCIÓN ---
 Button {
     text: root.procesando ? "PROCESANDO..." : "GUARDAR PRODUCTO";
     enabled: !root.procesando && root.formulario-valido;
     primary: true;
-    height: 35px;
+    height: 44px;
     clicked => {
         // Validación visual antes de enviar
         if (root.formulario-valido) {
@@ -330,24 +410,18 @@ Button {
                 "" + (unidad_p_sel.current-index + 1),
                 cant_s_in.text,
                 (unidad_s_sel.current-index == -1 ? "" : "" + (unidad_s_sel.current-index + 1)),
-                "" + (empaque_sel.current-index + 1),
-                sku_in.text, activo_check.checked ? "true" : "false",
+                sku_in.text,
+                "", // fecha_vencimiento (pendiente de campo UI)
+                activo_check.checked ? "true" : "false",
                 "" + (marca_sel.current-index + 1),
                 "" + (cat_sel.current-index + 1),     // 14. categoria_id
-                "" + (subcat_sel.current-index + 1)   // 15. subcategoria_id
+                "" + (subcat_sel.current-index + 1),  // 15. subcategoria_id
+                "" + (empaque_sel.current-index + 1)  // 16. empaque_id
             );
         }
     }
 }
 
-// BORRAR DESPUÉS DE PROBAR
-Text {
-    text: "Nombre: " + (name_in.text != "" ? "OK" : "FALTA") + 
-          " | SKU: " + (sku_in.text != "" ? "OK" : "FALTA") + 
-          " | Duplicado: " + (root.sku-duplicado ? "SÍ" : "NO");
-    color: red;
-    font-size: 10px;
-}
     }
 
     // --- CAPA DE BLOQUEO (OVERLAY) ---

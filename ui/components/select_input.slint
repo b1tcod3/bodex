@@ -6,11 +6,13 @@ export component SelectInput inherits Rectangle {
     in property <[string]> model: [];
     in property <int> current-index: 0;
     in property <bool> enabled: true;
-    in property <length> input-height: 22px;
-    in property <color> label-color: #888899;
-    in property <length> label-font-size: 9px;
+    in property <length> input-height: 36px;
+    in property <color> label-color: #d3d8e5;
+    in property <length> label-font-size: 12px;
     
-    property <length> label-height: 11px;
+    property <length> label-height: 16px;
+    property <color> normal-border: #5b6480;
+    property <color> focus-border: #00d4ff;
     
     VerticalLayout {
         spacing: 1px;
@@ -23,11 +25,20 @@ export component SelectInput inherits Rectangle {
             height: root.label-height;
         }
         
-        select := ComboBox {
-            model: root.model;
-            current-index: root.current-index;
+        Rectangle {
             height: root.input-height;
-            enabled: root.enabled;
+            border-width: select.has-focus ? 2px : 1px;
+            border-radius: 4px;
+            border-color: select.has-focus ? root.focus-border : root.normal-border;
+            background: root.enabled ? #171b29 : #10131c;
+
+            select := ComboBox {
+                model: root.model;
+                current-index: root.current-index;
+                width: parent.width;
+                height: parent.height;
+                enabled: root.enabled;
+            }
         }
     }
 }

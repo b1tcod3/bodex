@@ -151,7 +151,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
     });
 
     // 2. GESTIÓN DE PRODUCTOS
-    // Callback desde Slint: (nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id, cat_id, subcat_id)
+    // Callback desde Slint: (nombre, p_neto, p_venta, stock, desc, peso, tam, u_med, pres, cod, venc, activo, m_id, cat_id, subcat_id, empaque_id)
     // Función inventory::add_product: (nombre, precio_neto, precio_venta, stock, descripcion, codigo, activo_str, marca_id,
     //                                   medida_p_id, cantidad_p, medida_s_id, cantidad_s, empaque_id, categoria_id, subcategoria_id)
     ui.on_add_product({
@@ -166,11 +166,12 @@ pub fn setup_callbacks(ui: &AppWindow) {
               u_medida,  // -> medida_s_id
               pres,      // -> cantidad_s
               cod,
-              _f_venc,   // No usado actualmente
+              _f_venc,   // Fecha de vencimiento (aún no persistida en la nueva arquitectura)
               activo,    // Es SharedString desde Slint (string)
               m_id,
               cat_id,    // -> categoria_id (nuevo parámetro 14)
-              subcat_id| // -> subcategoria_id (nuevo parámetro 15)
+              subcat_id, // -> subcategoria_id (nuevo parámetro 15)
+              empaque_id| // -> empaque_id (nuevo parámetro 16)
             
             {
             
@@ -249,6 +250,8 @@ pub fn setup_callbacks(ui: &AppWindow) {
             let u_medida = u_medida.to_string();
             let pres = pres.to_string();
             let cod = cod.to_string();
+            let _f_venc = _f_venc.to_string();
+            let empaque_id = empaque_id.to_string();
             let activo_str = activo.to_string();  // Ya viene como string desde Slint
             let m_id = m_id.to_string();
             let cat_id = cat_id.to_string();
@@ -274,7 +277,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
                         SharedString::from(&tam),     // cantidad_p
                         SharedString::from(&u_medida), // medida_s_id
                         SharedString::from(&pres),    // cantidad_s
-                        SharedString::from("1"),      // empaque_id (default)
+                        SharedString::from(&empaque_id),
                         // Categoría y subcategoría
                         SharedString::from(&cat_id),    // categoria_id
                         SharedString::from(&subcat_id), // subcategoria_id
