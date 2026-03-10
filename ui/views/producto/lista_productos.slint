@@ -5,72 +5,166 @@ export component ListaProductos inherits Rectangle {
     
     // Callbacks
     callback refrescar();
-    callback ir_a_nuevo(); // Nuevo callback para navegación
+    callback ir_a_nuevo();
 
-    background: transparent;
+    background: #05050a; // Fondo profundo Cyberpunk
     horizontal-stretch: 1;
     vertical-stretch: 1;
 
     VerticalBox {
-        spacing: 20px;
-        padding: 0px;
+        spacing: 15px;
+        padding: 20px;
         horizontal-stretch: 1;
         vertical-stretch: 1;
 
+        // --- ENCABEZADO DE LA TERMINAL ---
         HorizontalBox {
             alignment: space-between;
-            min-height: 44px;
-            Text {
-                text: "📋 INVENTARIO";
-                font-size: 28px;
-                color: #00ffff;
-                font-weight: 800;
+            min-height: 50px;
+            
+            VerticalBox {
+                spacing: 0;
+                alignment: center;
+                Text {
+                    text: "CENTRAL DE INVENTARIO";
+                    font-size: 26px;
+                    color: #00f2ff;
+                    font-weight: 900;
+                    letter-spacing: 1.5px;
+                }
+                // Línea decorativa de "escaneo"
+                Rectangle {
+                    height: 2px;
+                    background: @linear-gradient(90deg, #00f2ff 0%, #ff00cc 100%);
+                }
             }
              
             HorizontalBox {
-                spacing: 10px;
-                Button {
-                    text: "➕ Nuevo Producto";
-                    primary: true;
-                    height: 38px;
-                    clicked => { root.ir_a_nuevo(); }
-                }
-                Button {
-                    text: "🔄";
-                    height: 38px;
+                spacing: 12px;
+                alignment: center;
+                
+                // Botón Refrescar Estilizado
+                TouchArea {
+                    width: 40px; height: 40px;
                     clicked => { root.refrescar(); }
+                    Rectangle {
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #00f2ff;
+                        Text {
+                            text: "🔄";
+                            font-size: 18px;
+                            color: #00f2ff;
+                        }
+                        animate background { duration: 150ms; }
+                    }
+                }
+
+                // Botón Nuevo Producto con gradiente
+                TouchArea {
+                    width: 180px; height: 40px;
+                    clicked => { root.ir_a_nuevo(); }
+                    Rectangle {
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #ffffff55;
+                        
+                        HorizontalBox {
+                            alignment: center;
+                            spacing: 8px;
+                            Text {
+                                text: "＋";
+                                font-size: 18px;
+                                color: white;
+                                font-weight: 900;
+                            }
+                            Text {
+                                text: "AÑADIR REGISTRO";
+                                font-size: 13px;
+                                color: white;
+                                font-weight: 800;
+                            }
+                        }
+                        animate background { duration: 150ms; }
+                    }
                 }
             }
         }
 
-        Text {
-            text: "Código | Nombre | Precio | Stock | Marca | Estado";
-            color: #9aa0b4;
-            font-size: 13px;
+        // --- SUBTÍTULO / STATUS BAR (CORREGIDO) ---
+        // Usamos un Rectangle para la barra lateral y otro para el fondo
+        HorizontalBox {
+            min-height: 24px;
+            spacing: 0; // Importante para que la barra esté pegada al fondo
+            
+            Rectangle { // Esta es la "barra lateral" magenta
+                width: 4px;
+                background: #ff00cc;
+            }
+            
+            Rectangle {
+                background: #1a1a2e;
+                horizontal-stretch: 1;
+                
+                HorizontalBox {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    alignment: start;
+                    Text {
+                        text: "MOSTRANDO: BASE DE DATOS LOCAL // FILTRADO POR: TODOS";
+                        color: #a0a0ff;
+                        font-size: 11px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                }
+            }
         }
 
+        // --- CONTENEDOR DE TABLA (FRAME DE DATOS) ---
         Rectangle {
-            background: #161625;
-            border-radius: 10px;
+            background: #0f0f1b;
+            border-radius: 8px;
             border-width: 1px;
-            border-color: #ff00ff;
+            border-color: #00f2ff33; 
             clip: true;
             horizontal-stretch: 1;
             vertical-stretch: 1;
-            min-height: 420px;
+            
+            Rectangle {
+                background: @linear-gradient(180deg, #00f2ff05 0%, #00000000 20%);
+            }
 
             StandardTableView {
-                width: parent.width;
-                height: parent.height;
+                width: parent.width - 4px;
+                height: parent.height - 4px;
+                x: 2px; y: 2px;
                 columns: [
-                    { title: "Código" },
-                    { title: "Producto" },
-                    { title: "Precio" },
-                    { title: "Stock" },
-                    { title: "Marca" },
-                    { title: "Estado" }
+                    { title: "CÓDIGO" },
+                    { title: "NOMBRE DEL PRODUCTO" },
+                    { title: "PRECIO ($)" },
+                    { title: "STOCK" },
+                    { title: "MARCA" },
+                    { title: "ESTADO" }
                 ];
                 rows: root.rows;
+            }
+        }
+        
+        // --- FOOTER TÉCNICO ---
+        HorizontalBox {
+            alignment: space-between;
+            Text {
+                text: "SISTEMA OPERATIVO : : DAT-EXC V1.0";
+                color: #404060;
+                font-size: 10px;
+                font-weight: 800;
+            }
+            Text {
+                text: "CONEXIÓN ESTABLE";
+                color: #00ff88;
+                font-size: 10px;
+                font-weight: 800;
             }
         }
     }

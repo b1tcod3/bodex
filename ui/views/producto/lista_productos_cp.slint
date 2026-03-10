@@ -1,0 +1,37 @@
+import { VerticalBox, StandardTableView } from "std-widgets.slint";
+import { FilterInput } from "../../components/filter_input.slint";
+import { DataTable } from "../../components/data_table.slint";
+
+export component ListaProductos inherits Rectangle {
+    background: #05050a;
+
+    VerticalBox {
+        padding: 20px;
+        spacing: 20px;
+
+        FilterInput{
+            placeholder: "Buscar producto...";
+
+            changed(text) => {
+                // Aquí puedes implementar la lógica de filtrado de productos
+                console.log("Texto ingresado:", text);
+            }
+        }
+
+        DataTable {
+            // Aquí puedes configurar las columnas y los datos de tu tabla de productos
+            headers: ["ID", "Nombre", "Precio"];
+            rows: [
+                ["1", "Producto A", "$10"],
+                ["2", "Producto B", "$20"],
+                ["3", "Producto C", "$30"]
+            ];
+            row-clicked(idx, data) => {
+                // Aquí puedes manejar el evento de clic en una fila de la tabla
+                console.log("Fila clickeada:", idx, data);
+            }
+        }
+
+    }
+}
+

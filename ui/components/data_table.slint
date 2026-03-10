@@ -1,0 +1,70 @@
+import { ScrollView, VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export component DataTable inherits Rectangle {
+    in property <[string]> headers;   // Nombres de columnas
+    in property <[[string]]> rows;    // Matriz de datos
+    in property <[length]> column-widths; // Anchos relativos (opcional)
+    
+    callback row-clicked(int, [string]); // Devuelve el índice y la data de la fila
+
+    background: #0f0f1b;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: #00f2ff33;
+    clip: true;
+
+    VerticalBox {
+        padding: 0px;
+        spacing: 0px;
+
+        // --- HEADER DINÁMICO ---
+        Rectangle {
+            background: #16162a;
+            height: 40px;
+            HorizontalBox {
+                padding-left: 15px; padding-right: 15px;
+                for title in root.headers : Text {
+                    text: title;
+                    color: #00f2ff;
+                    font-size: 11px;
+                    font-weight: 900;
+                    width: parent.width / root.headers.length; // Distribución equitativa
+                }
+            }
+            // Línea de escaneo
+            Rectangle {
+                y: parent.height - 1px; height: 1px;
+                background: @linear-gradient(90deg, #00f2ff00 0%, #00f2ffaa 50%, #00f2ff00 100%);
+            }
+        }
+
+        // --- CUERPO SCROLLABLE ---
+        ScrollView {
+            viewport-height: root.rows.length * 40px;
+            VerticalBox {
+                padding: 0px; spacing: 0px; alignment: start;
+                
+                for row-data[i] in root.rows : TouchArea {
+                    height: 40px;
+                    clicked => { root.row-clicked(i, row-data); }
+
+                    Rectangle {
+                        background: #00000000;
+                        
+                        HorizontalBox {
+                            padding-left: 15px; padding-right: 15px;
+                            for cell-text in row-data : Text {
+                                text: cell-text;
+                                color: #b8c2df;
+                                font-size: 13px;
+                                width: parent.width / root.headers.length;
+                                vertical-alignment: center;
+                                overflow: elide; // Corta el texto si es muy largo
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

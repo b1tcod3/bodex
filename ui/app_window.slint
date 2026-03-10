@@ -1,7 +1,8 @@
 import { Button, VerticalBox, HorizontalBox, StandardTableView } from "std-widgets.slint";
 import { LoginView } from "views/login_view.slint";
 import { NuevoProducto } from "views/producto/nuevo_producto.slint";
-import { ListaProductos } from "views/producto/lista_productos.slint";
+// import { ListaProductos } from "views/producto/lista_productos.slint";
+import { ListaProductos } from "views/producto/lista_productos_cp.slint";
 import { DashboardView } from "views/dashboard_view.slint";
 
 export component AppWindow inherits Window {
@@ -130,17 +131,21 @@ export component AppWindow inherits Window {
             }
 
             // 2. LISTA DE PRODUCTOS
-            if (product-screen == "lista") : ListaProductos {
-                rows: root.inventory-rows;
-                
-                ir_a_nuevo => { 
-                    root.product-screen = "nuevo"; 
-                }
-                
-                refrescar => { 
-                    root.refresh-inventory(); 
-                }
-            }
+//            if (product-screen == "lista") : ListaProductos {
+//                rows: root.inventory-rows;
+//                
+//                ir_a_nuevo => { 
+//                    root.product-screen = "nuevo"; 
+//                }
+//                
+//                refrescar => { 
+//                    root.refresh-inventory(); 
+//                }
+//            }
+            
+            // Lista prueba
+            if(product-screen == "lista") : ListaProductos{}
+            
 
             // 3. FORMULARIO DE NUEVO PRODUCTO
             if (product-screen == "nuevo") : NuevoProducto {

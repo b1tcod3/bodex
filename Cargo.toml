@@ -10,14 +10,16 @@ desktop = ["slint/std", "slint/compat-1-2", "slint/renderer-software", "slint/ba
 
 [dependencies]
 slint = { version = "1.15.1", default-features = false, features = ["backend-android-activity-06"] }
-i-slint-backend-android-activity = "=1.15.1"
 rusqlite = { version = "0.29.0", features = ["bundled", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 bcrypt = "0.15"
 lazy_static = "1.5.0"
-android-activity = { version = "0.6", features = ["native-activity"] }
 tokio = { version = "1", features = ["full"] }
 regex = "1.10"
+
+[target.'cfg(target_os = "android")'.dependencies]
+i-slint-backend-android-activity = "=1.15.1"
+android-activity = { version = "0.6", features = ["native-activity"] }
 
 [build-dependencies]
 slint-build = "1.15.1"
