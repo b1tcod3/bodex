@@ -5,41 +5,24 @@ edition = "2021"
 
 [features]
 default = ["desktop"]
-android = ["slint/libm", "slint/renderer-software"]
 desktop = ["slint/std", "slint/compat-1-2", "slint/renderer-software", "slint/backend-winit"]
 
 [dependencies]
-slint = { version = "1.15.1", default-features = false, features = ["backend-android-activity-06"] }
+slint = { version = "1.15.1", default-features = false, features = ["backend-winit"] }
 rusqlite = { version = "0.29.0", features = ["bundled", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 bcrypt = "0.15"
 lazy_static = "1.5.0"
 tokio = { version = "1", features = ["full"] }
 regex = "1.10"
+once_cell = "1.19.0"
 
-[target.'cfg(target_os = "android")'.dependencies]
-i-slint-backend-android-activity = "=1.15.1"
-android-activity = { version = "0.6", features = ["native-activity"] }
 
 [build-dependencies]
 slint-build = "1.15.1"
 
-[lib]
-name = "bodex"
-crate-type = ["cdylib"]
-path = "src/lib.rs"
 
 [[bin]]
 name = "bodex_bin"
 path = "src/main.rs"
 
-[package.metadata.android]
-package = "com.jose.bodex"
-label = "Bodex App"
-build_targets = ["aarch64-linux-android"]
-
-[package.metadata.android.signing.release]
-path = "my-release-key.keystore"
-keystore_password = "Didi.871."
-alias = "my-key-alias"
-key_password = "Didi.871."

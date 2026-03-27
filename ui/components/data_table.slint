@@ -23,12 +23,13 @@ export component DataTable inherits Rectangle {
             height: 40px;
             HorizontalBox {
                 padding-left: 15px; padding-right: 15px;
-                for title in root.headers : Text {
+                for title[i] in root.headers : Text {
                     text: title;
                     color: #00f2ff;
                     font-size: 11px;
                     font-weight: 900;
-                    width: parent.width / root.headers.length; // Distribución equitativa
+                    width: 100px; // Ancho fijo igual que las celdas
+                    horizontal-alignment: i == 2 || i == 3 ? TextHorizontalAlignment.right : TextHorizontalAlignment.left;
                 }
             }
             // Línea de escaneo
@@ -41,6 +42,7 @@ export component DataTable inherits Rectangle {
         // --- CUERPO SCROLLABLE ---
         ScrollView {
             viewport-height: root.rows.length * 40px;
+            width: 100%;
             VerticalBox {
                 padding: 0px; spacing: 0px; alignment: start;
                 
@@ -49,19 +51,31 @@ export component DataTable inherits Rectangle {
                     clicked => { root.row-clicked(i, row-data); }
 
                     Rectangle {
-                        background: #00000000;
+                        // Alternancia de colores para mejor legibilidad
+                        background: Math.mod(i, 2) == 0 ? #0a0a14 : #0f0f1b;
                         
                         HorizontalBox {
                             padding-left: 15px; padding-right: 15px;
-                            for cell-text in row-data : Text {
-                                text: cell-text;
+                            for cell[j] in row-data : Text {
+                                text: cell;
                                 color: #b8c2df;
                                 font-size: 13px;
-                                width: parent.width / root.headers.length;
+                                width: 100px; // Ancho fijo para evitar ciclos de binding
                                 vertical-alignment: center;
                                 overflow: elide; // Corta el texto si es muy largo
+                                // Alineación según tipo de dato (números a la derecha, texto a la izquierda)
+                                horizontal-alignment: j == 2 || j == 3 ? TextHorizontalAlignment.right : TextHorizontalAlignment.left;
                             }
                         }
+                        
+                        // Efecto hover
+                        states [
+                            hovered when parent.has-hover : {
+                                background: #1a1a2e;
+                            }
+                        ]
+                        
+                        animate background { duration: 150ms; }
                     }
                 }
             }

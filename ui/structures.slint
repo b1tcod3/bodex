@@ -1,0 +1,48 @@
+// Estructuras reutilizables para la UI
+
+// Estructura para representar productos en la UI
+export struct Producto {
+    codigo: string,
+    nombre: string,
+    marca: string,
+    precio: string,
+    stock: string,
+}
+
+// Estructura para representar productos con datos de marca
+export struct ProductoConMarca {
+    id: i64,
+    nombre: string,
+    precio_neto: f64,
+    precio_venta: f64,
+    stock: i64,
+    descripcion: Option<string>,
+    codigo: Option<string>,
+    activo: bool,
+    marca_id: Option<i64>,
+    marca_nombre: Option<string>,
+    medida_p_id: i32,
+    cantidad_p: f64,
+    empaque_id: i32,
+    categoria_id: i32,
+    subcategoria_id: i32,
+}
+
+// Estructura para representar productos nuevos
+export struct ProductoNuevo {
+    nombre: string,
+    precio_neto: f64,
+    precio_venta: f64,
+    stock: i64,
+    descripcion: Option<string>,
+    codigo: Option<string>,
+    activo: bool,
+    marca_id: Option<i64>,
+    medida_p_id: i32,
+    cantidad_p: f64,
+    medida_s_id: Option<i32>,
+    cantidad_s: Option<f64>,
+    empaque_id: i32,
+    categoria_id: i32,
+    subcategoria_id: i32,
+}

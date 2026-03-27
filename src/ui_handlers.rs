@@ -1,7 +1,9 @@
 use crate::db;
 use crate::inventory;
+use crate::productos;
 use crate::AppWindow;
-use slint::{ComponentHandle, SharedString, Weak};
+use slint::{ComponentHandle, SharedString, Weak, ModelRc, VecModel};
+use std::rc::Rc;
 
 /// Filtra caracteres no numéricos de un string
 /// Permite dígitos, punto decimal (opcional) y signo negativo (opcional)
@@ -62,7 +64,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
                 }
                 
                 // 1. Primero validar el formato del SKU (caracteres)
-                let validacion_formato = inventory::validar_formato_sku(sku.as_str());
+                let validacion_formato = productos::validar_formato_sku(sku.as_str());
                 if !validacion_formato.es_valido {
                     // Error de formato: limpiar error de duplicado, mostrar error de formato
                     ui.set_sku_duplicado(false);
@@ -181,7 +183,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
                 if let Some(ui) = ui_handle.upgrade() {
                     // Validar formato y unicidad del SKU
                     if !cod.trim().is_empty() {
-                        let validacion_sku = inventory::validar_sku_completo(cod.as_str());
+                        let validacion_sku = productos::validar_sku_completo(cod.as_str());
                         if !validacion_sku.es_valido {
                             ui.set_sku_duplicado(true);
                             if let Some(error_msg) = validacion_sku.error {
@@ -263,7 +265,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
                 async move {
                     // --- HILO SECUNDARIO ---
                     // 1. Intentamos guardar el producto (operación pesada de DB)
-                    let save_result = inventory::add_product(
+                    let save_result = productos::add_product(
                         SharedString::from(&nombre),
                         SharedString::from(&p_neto),
                         SharedString::from(&p_venta),
@@ -343,7 +345,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
             tokio::spawn({
                 let ui_handle = ui_handle.clone();
                 async move {
-                    let result = inventory::delete_product_by_index(index);
+                    let result = productos::delete_product_by_index(index);
                     
                     // Procesar resultado ANTES de upgrade_in_event_loop
                     let success = result.is_ok();
@@ -368,7 +370,7 @@ pub fn setup_callbacks(ui: &AppWindow) {
     ui.on_get_product_for_edit({
         let ui_handle = ui_handle.clone();
         move |index| {
-            if let Some(product) = inventory::get_product_by_index(index) {
+            if let Some(product) = productos::get_product_by_index(index) {
                 if let Some(ui) = ui_handle.upgrade() {
                     ui.set_edit_product_id(product.id as i32);
                     ui.set_edit_product_name(product.nombre.into());
@@ -406,9 +408,22 @@ fn refresh_ui(ui_handle: Weak<AppWindow>) {
             // 2. Volvemos al hilo de la UI para actualizar la tabla
             // Los datos crudos (Vec<ProductRowData>) son Send
             if let Err(e) = ui_handle.upgrade_in_event_loop(move |ui| {
-                // Convertir datos crudos a ModelRc DENTRO del hilo de UI
-                let model_rows = inventory::raw_to_model_rows(filas);
-                ui.set_inventory_rows(model_rows);
+                // Convertir datos crudos a ModelRc<ModelRc<SharedString>> DENTRO del hilo de UI
+                let model_rows: Vec<ModelRc<SharedString>> = filas
+                    .into_iter()
+                    .map(|r| {
+                        let row_data = vec![
+                            SharedString::from(r.codigo),
+                            SharedString::from(r.nombre),
+                            SharedString::from(r.precio_venta),
+                            SharedString::from(r.stock),
+                            SharedString::from(r.marca_nombre),
+                            SharedString::from(if r.activo { "true" } else { "false" }),
+                        ];
+                        ModelRc::from(Rc::new(VecModel::from(row_data)))
+                    })
+                    .collect();
+                ui.set_inventory_rows(ModelRc::from(Rc::new(VecModel::from(model_rows))));
                 println!("Tabla actualizada en segundo plano.");
             }) {
                 eprintln!("Error al actualizar UI: {}", e);
@@ -426,8 +441,22 @@ fn refresh_ui_from_main(ui: &AppWindow) {
 
         if let Ok(filas) = filas_res {
             if let Err(e) = ui_handle.upgrade_in_event_loop(move |ui| {
-                let model_rows = inventory::raw_to_model_rows(filas);
-                ui.set_inventory_rows(model_rows);
+                // Convertir datos crudos a ModelRc<ModelRc<SharedString>> DENTRO del hilo de UI
+                let model_rows: Vec<ModelRc<SharedString>> = filas
+                    .into_iter()
+                    .map(|r| {
+                        let row_data = vec![
+                            SharedString::from(r.codigo),
+                            SharedString::from(r.nombre),
+                            SharedString::from(r.precio_venta),
+                            SharedString::from(r.stock),
+                            SharedString::from(r.marca_nombre),
+                            SharedString::from(if r.activo { "true" } else { "false" }),
+                        ];
+                        ModelRc::from(Rc::new(VecModel::from(row_data)))
+                    })
+                    .collect();
+                ui.set_inventory_rows(ModelRc::from(Rc::new(VecModel::from(model_rows))));
                 println!("Tabla actualizada en segundo plano.");
             }) {
                 eprintln!("Error al actualizar UI: {}", e);
@@ -448,8 +477,22 @@ pub fn load_initial_data(ui: &AppWindow) {
         if let Ok(filas) = filas_res {
             // 2. Volvemos al hilo de la UI para actualizar la tabla
             if let Err(e) = ui_handle.upgrade_in_event_loop(move |ui| {
-                let model_rows = inventory::raw_to_model_rows(filas);
-                ui.set_inventory_rows(model_rows);
+                // Convertir datos crudos a ModelRc<ModelRc<SharedString>> DENTRO del hilo de UI
+                let model_rows: Vec<ModelRc<SharedString>> = filas
+                    .into_iter()
+                    .map(|r| {
+                        let row_data = vec![
+                            SharedString::from(r.codigo),
+                            SharedString::from(r.nombre),
+                            SharedString::from(r.precio_venta),
+                            SharedString::from(r.stock),
+                            SharedString::from(r.marca_nombre),
+                            SharedString::from(if r.activo { "true" } else { "false" }),
+                        ];
+                        ModelRc::from(Rc::new(VecModel::from(row_data)))
+                    })
+                    .collect();
+                ui.set_inventory_rows(ModelRc::from(Rc::new(VecModel::from(model_rows))));
                 println!("Datos iniciales cargados en segundo plano.");
             }) {
                 eprintln!("Error al cargar datos iniciales: {}", e);

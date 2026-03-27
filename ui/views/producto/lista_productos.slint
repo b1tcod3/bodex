@@ -1,27 +1,64 @@
-import { Button, VerticalBox, HorizontalBox, StandardTableView } from "std-widgets.slint";
+import { ScrollView, VerticalBox, HorizontalBox, Button } from "std-widgets.slint";
+import { FilterInput } from "../../components/filter_input.slint";
+
+// Sub-componente interno para los botones del encabezado (Reutilizable)
+component BotonCibernetico inherits Rectangle {
+    in property <string> icono;
+    in property <string> texto;
+    in property <color> color_acento: #00f2ff;
+    callback clicado <=> touch.clicked;
+
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: touch.has-hover ? color_acento : color_acento.darker(50%);
+    background: touch.pressed ? color_acento.with-alpha(0.2) : #00000000;
+    min-height: 40px;
+    
+    animate background, border-color { duration: 150ms; }
+
+    touch := TouchArea { }
+
+    HorizontalBox {
+        alignment: center;
+        spacing: 8px;
+        Text {
+            text: icono;
+            font-size: 18px;
+            color: color_acento;
+            font-weight: 900;
+        }
+        if texto != "" : Text {
+            text: texto;
+            font-size: 13px;
+            color: white;
+            font-weight: 800;
+        }
+    }
+}
 
 export component ListaProductos inherits Rectangle {
-    in-out property <[[StandardListViewItem]]> rows;
-    
-    // Callbacks
+    // --- PROPIEDADES ---
+    in property <[string]> headers: ["CÓDIGO", "NOMBRE", "MARCA", "PRECIO NETO($)", "CANTIDAD", "ACCIONES"];
+    in-out property <[[string]]> rows; // Mantenemos el formato de matriz de strings que usabas
+
+    // --- CALLBACKS ---
     callback refrescar();
     callback ir_a_nuevo();
+    callback editar(int, [string]);
+    callback eliminar(int, [string]);
+    callback buscar(string);
 
-    background: #05050a; // Fondo profundo Cyberpunk
-    horizontal-stretch: 1;
-    vertical-stretch: 1;
+    background: #05050a;
 
     VerticalBox {
-        spacing: 15px;
         padding: 20px;
-        horizontal-stretch: 1;
-        vertical-stretch: 1;
+        spacing: 20px;
 
-        // --- ENCABEZADO DE LA TERMINAL ---
+        // --- ENCABEZADO ---
         HorizontalBox {
             alignment: space-between;
-            min-height: 50px;
-            
+            min-height: 60px;
+
             VerticalBox {
                 spacing: 0;
                 alignment: center;
@@ -32,139 +69,134 @@ export component ListaProductos inherits Rectangle {
                     font-weight: 900;
                     letter-spacing: 1.5px;
                 }
-                // Línea decorativa de "escaneo"
                 Rectangle {
                     height: 2px;
                     background: @linear-gradient(90deg, #00f2ff 0%, #ff00cc 100%);
                 }
             }
-             
+
             HorizontalBox {
                 spacing: 12px;
                 alignment: center;
-                
-                // Botón Refrescar Estilizado
-                TouchArea {
-                    width: 40px; height: 40px;
-                    clicked => { root.refrescar(); }
-                    Rectangle {
-                        border-radius: 4px;
-                        border-width: 1px;
-                        border-color: #00f2ff;
-                        Text {
-                            text: "🔄";
-                            font-size: 18px;
-                            color: #00f2ff;
-                        }
-                        animate background { duration: 150ms; }
-                    }
+
+                BotonCibernetico {
+                    icono: "🔄";
+                    texto: "";
+                    width: 45px;
+                    clicado => { root.refrescar(); }
                 }
 
-                // Botón Nuevo Producto con gradiente
-                TouchArea {
-                    width: 180px; height: 40px;
-                    clicked => { root.ir_a_nuevo(); }
-                    Rectangle {
-                        border-radius: 4px;
-                        border-width: 1px;
-                        border-color: #ffffff55;
-                        
-                        HorizontalBox {
-                            alignment: center;
-                            spacing: 8px;
-                            Text {
-                                text: "＋";
-                                font-size: 18px;
-                                color: white;
-                                font-weight: 900;
-                            }
-                            Text {
-                                text: "AÑADIR REGISTRO";
-                                font-size: 13px;
-                                color: white;
-                                font-weight: 800;
-                            }
-                        }
-                        animate background { duration: 150ms; }
-                    }
+                BotonCibernetico {
+                    icono: "＋";
+                    texto: "AÑADIR REGISTRO";
+                    width: 180px;
+                    color_acento: #ffffff;
+                    clicado => { root.ir_a_nuevo(); }
                 }
             }
         }
 
-        // --- SUBTÍTULO / STATUS BAR (CORREGIDO) ---
-        // Usamos un Rectangle para la barra lateral y otro para el fondo
-        HorizontalBox {
-            min-height: 24px;
-            spacing: 0; // Importante para que la barra esté pegada al fondo
-            
-            Rectangle { // Esta es la "barra lateral" magenta
-                width: 4px;
-                background: #ff00cc;
-            }
-            
-            Rectangle {
-                background: #1a1a2e;
-                horizontal-stretch: 1;
-                
-                HorizontalBox {
-                    padding-left: 10px;
-                    padding-right: 10px;
-                    alignment: start;
-                    Text {
-                        text: "MOSTRANDO: BASE DE DATOS LOCAL // FILTRADO POR: TODOS";
-                        color: #a0a0ff;
-                        font-size: 11px;
-                        font-weight: 700;
-                        vertical-alignment: center;
-                    }
-                }
-            }
+        // --- FILTRO ---
+        FilterInput {
+            placeholder: "Buscar producto por código o nombre...";
+            changed(text) => { root.buscar(text); }
         }
 
-        // --- CONTENEDOR DE TABLA (FRAME DE DATOS) ---
+        // --- TABLA INTEGRADA ---
         Rectangle {
             background: #0f0f1b;
             border-radius: 8px;
             border-width: 1px;
-            border-color: #00f2ff33; 
+            border-color: #00f2ff33;
             clip: true;
-            horizontal-stretch: 1;
-            vertical-stretch: 1;
-            
-            Rectangle {
-                background: @linear-gradient(180deg, #00f2ff05 0%, #00000000 20%);
-            }
 
-            StandardTableView {
-                width: parent.width - 4px;
-                height: parent.height - 4px;
-                x: 2px; y: 2px;
-                columns: [
-                    { title: "CÓDIGO" },
-                    { title: "NOMBRE DEL PRODUCTO" },
-                    { title: "PRECIO ($)" },
-                    { title: "STOCK" },
-                    { title: "MARCA" },
-                    { title: "ESTADO" }
-                ];
-                rows: root.rows;
-            }
-        }
-        
-        // --- FOOTER TÉCNICO ---
-        HorizontalBox {
-            alignment: space-between;
-            Text {
-                text: "SISTEMA OPERATIVO : : DAT-EXC V1.0";
-                color: #404060;
-                font-size: 10px;
-                font-weight: 800;
-            }
-            Text {
-                text: "CONEXIÓN ESTABLE";
-                color: #00ff88;
-                font-size: 10px;
-                font-weight: 800;
+            VerticalBox {
+                padding: 0px;
+                spacing: 0px;
+
+                // Header de la Tabla
+                Rectangle {
+                    background: #16162a;
+                    height: 45px;
+                    HorizontalBox {
+                        padding-left: 15px; padding-right: 15px;
+                        for title[i] in root.headers : Text {
+                            text: title;
+                            color: #00f2ff;
+                            font-size: 11px;
+                            font-weight: 900;
+                            width: 120px;
+                            horizontal-alignment: i == 5 ? center : left;
+                        }
+                    }
+                    // Línea decorativa inferior
+                    Rectangle {
+                        y: parent.height - 1px; height: 1px;
+                        background: @linear-gradient(90deg, #00f2ff00 0%, #00f2ffaa 50%, #00f2ff00 100%);
+                    }
+                }
+
+                // Cuerpo de la Tabla (Scrollable)
+                ScrollView {
+                    viewport-height: root.rows.length * 45px;
+                    
+                    VerticalBox {
+                        padding: 0px; spacing: 0px; alignment: start;
+
+                        for row-data[i] in root.rows : TouchArea {
+                            height: 45px;
+                            
+                            Rectangle {
+                                background: parent.has-hover ? #1a1a2e : (Math.mod(i, 2) == 0 ? #0a0a14 : #0f0f1b);
+                                animate background { duration: 100ms; }
+
+                                HorizontalBox {
+                                    padding-left: 15px; padding-right: 15px;
+                                    
+                                    // Datos de la fila
+                                    for cell[j] in row-data : Text {
+                                        visible: j < 5;
+                                        text: cell;
+                                        color: #b8c2df;
+                                        font-size: 13px;
+                                        width: 120px;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+
+                                    // Columna de Acciones
+                                    HorizontalBox {
+                                        width: 120px;
+                                        alignment: center;
+                                        spacing: 15px;
+
+                                        // Editar
+                                        TouchArea {
+                                            width: 20px; height: 20px;
+                                            clicked => { root.editar(i, row-data); }
+                                            Text {
+                                                text: "✏️";
+                                                font-size: 16px;
+                                                color: #00f2ff;
+                                            }
+                                        }
+
+                                        // Eliminar
+                                        TouchArea {
+                                            width: 20px; height: 20px;
+                                            clicked => { root.eliminar(i, row-data); }
+                                            Text {
+                                                text: "🗑️";
+                                                font-size: 16px;
+                                                color: #ff0066;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

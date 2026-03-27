@@ -1,6 +1,7 @@
 // 1. Declaración de módulos internos
 mod db;
 mod inventory;
+mod productos;
 mod models;
 mod ui_handlers;
 
@@ -50,7 +51,7 @@ async fn main() {
         };
 
         // Configuración de ventana
-        ui.window().set_maximized(false);
+        ui.window().set_maximized(true);
 
         // 5. Configuración de la lógica (Handlers de botones y eventos)
         ui_handlers::setup_callbacks(&ui);

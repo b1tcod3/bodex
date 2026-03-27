@@ -30,8 +30,8 @@ cargo build --release
 # Ejecutar la aplicación
 cargo run --release
 ```
-Compilación windows
-set "PATH=C:\Program Files\Java\jdk-17\bin;%PATH%" && set "JAVA_HOME=C:\Program Files\Java\jdk-17" && set "ANDROID_HOME=C:\Android\sdk" && set "ANDROID_PLATFORM=android-34" && cargo apk build --release
+Compilación
+cargo build --release
 
 ## Credenciales por Defecto
 
