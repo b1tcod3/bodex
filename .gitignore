@@ -1,2 +1,7 @@
 /target
 *.db
+*.log
+.DS_Store
+*.swp
+*.swo
+*~
